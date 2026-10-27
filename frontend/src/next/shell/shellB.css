@@ -1,0 +1,253 @@
+/* Shell B — Workbench: one top bar, project tabs beneath, sans headings, rounded surfaces. */
+.app-b {
+  --title-font: var(--sans);
+  --title-weight: 650;
+  --title-ls: -0.03em;
+  --card-radius: 14px;
+  --card-shadow: 0 1px 2px rgba(23, 22, 28, 0.04), 0 8px 24px -16px rgba(40, 30, 10, 0.18);
+  --btn-radius: 10px;
+  --primary-bg: var(--ink);
+  --primary-bg-hover: var(--ink-raised);
+  min-height: 100vh;
+  background: var(--paper);
+}
+
+.rb-top {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--surface);
+  border-bottom: 1px solid var(--rule);
+}
+
+.rb-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 64px;
+  padding: 0 clamp(16px, 3vw, 32px);
+}
+
+.rb-brand {
+  display: inline-flex;
+  flex: none;
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.rb-rule {
+  flex: none;
+  width: 1px;
+  height: 28px;
+  background: var(--rule);
+}
+
+.app-b .pswitch-btn {
+  border-color: transparent;
+  background: transparent;
+  max-width: 320px;
+}
+
+.app-b .pswitch-btn:hover,
+.app-b .pswitch[open] .pswitch-btn {
+  background: var(--paper);
+  border-color: var(--rule);
+}
+
+.rb-links {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.rb-links a {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  color: var(--ink2);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.rb-links a:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.rb-links a[aria-current='page'] {
+  color: var(--ink);
+  font-weight: 600;
+  background: var(--paper);
+}
+
+.rb-av {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--avatar-from), var(--avatar-to));
+  color: #fff;
+  font: 600 11.5px/1 var(--sans);
+}
+
+.rb-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--surface);
+  cursor: pointer;
+  list-style: none;
+}
+
+.rb-icon::-webkit-details-marker {
+  display: none;
+}
+
+.rb-wmenu {
+  position: relative;
+  display: none;
+}
+
+.rb-wmenu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 60;
+  display: grid;
+  width: 220px;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+}
+
+.rb-wmenu-panel a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  text-decoration: none;
+}
+
+.rb-wmenu-panel a:hover,
+.rb-wmenu-panel a[aria-current='page'] {
+  background: var(--paper);
+}
+
+/* ---------- Project tabs ---------- */
+.rb-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 clamp(8px, 3vw, 24px);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.rb-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.rb-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 12px;
+  font: 550 14px/1 var(--sans);
+  color: var(--muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.rb-tab:hover {
+  color: var(--ink);
+}
+
+.rb-tab[aria-current='page'] {
+  color: var(--ink);
+}
+
+.rb-count {
+  min-width: 22px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: var(--mark);
+  font: 600 11px/1 var(--mono);
+  text-align: center;
+  color: var(--ink);
+}
+
+.rb-count.is-zero {
+  background: var(--rule2);
+  color: var(--muted);
+}
+
+.rb-underline {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--accent);
+}
+
+.rb-content {
+  padding: clamp(20px, 3vw, 36px) clamp(16px, 3vw, 32px) 96px;
+}
+
+.app-b .page {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* B leans on cards; tables live inside them. */
+.app-b .table th {
+  background: var(--rail);
+}
+
+@media (max-width: 1180px) {
+  .rb-links {
+    display: none;
+  }
+  .rb-wmenu {
+    display: block;
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .rb-bar {
+    gap: 8px;
+  }
+  .rb-brand .lockup-product,
+  .rb-brand .lockup-rule,
+  .rb-rule,
+  .rb-bar .sample-chip,
+  .rb-av {
+    display: none;
+  }
+  .rb-new span {
+    display: none;
+  }
+  .rb-new {
+    width: 34px;
+    padding: 0;
+  }
+  .app-b .pswitch {
+    min-width: 0;
+    flex: 1;
+  }
+  .app-b .pswitch-btn {
+    max-width: none;
+  }
+}

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { BrandLockup } from '../../../src/brand/BrandLockup';
 import {
-  WORKSPACE_HREF,
+  workspaceHref,
   capabilities,
   exportSample,
   piiRegions,
@@ -29,8 +29,8 @@ import {
   tracks,
   workflow,
   type Modality,
-} from '../content';
-import { DetectionFrame, EntityText, Filmstrip, PiiFrame, TrackFrame, type Stage } from '../specimens';
+} from '../../../src/showcase/content';
+import { DetectionFrame, EntityText, Filmstrip, PiiFrame, TrackFrame, type Stage } from '../../../src/showcase/specimens';
 import './b.css';
 
 const STEP_MS = 3200;
@@ -398,7 +398,7 @@ export default function LiveSpecimen() {
       <div className="b-root">
         <header className="b-top">
           <BrandLockup size="md" />
-          <a className="b-btn b-btn-accent b-btn-sm" href={WORKSPACE_HREF}>
+          <a className="b-btn b-btn-accent b-btn-sm" href={workspaceHref('b')}>
             Open workspace
           </a>
         </header>
@@ -470,7 +470,7 @@ export default function LiveSpecimen() {
           <section className="b-cta">
             <h2>Run your first project.</h2>
             <p>Bring a dataset, name the classes, and let the first pass run.</p>
-            <a className="b-btn b-btn-accent" href={WORKSPACE_HREF}>
+            <a className="b-btn b-btn-accent" href={workspaceHref('b')}>
               Open workspace <ArrowRight size={16} aria-hidden />
             </a>
           </section>

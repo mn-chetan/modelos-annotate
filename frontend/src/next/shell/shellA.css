@@ -1,0 +1,293 @@
+/* Shell A — Review Desk: concept-07 rail, paper and ink, serif titles. */
+.app-a {
+  --title-font: var(--serif);
+  --title-weight: 400;
+  --title-ls: -0.02em;
+  --card-radius: 8px;
+  --card-shadow: none;
+  --btn-radius: 999px;
+  --primary-bg: var(--ink);
+  --primary-bg-hover: var(--ink-raised);
+  display: grid;
+  grid-template-columns: var(--rail-w) minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--paper);
+}
+
+/* ---------- Rail ---------- */
+.ra-rail {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px 14px 14px;
+  background: var(--rail);
+  border-right: 1px solid var(--rule);
+  overflow-y: auto;
+}
+
+.ra-brand {
+  display: block;
+  padding: 2px 6px 4px;
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.app-a .pswitch-btn {
+  width: 100%;
+}
+
+/* The rail scrolls, which clips overflow, so the menu stays within its width. */
+.app-a .pswitch-menu {
+  width: 100%;
+}
+
+.ra-nav ul {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.ra-group {
+  margin: 0 0 6px;
+  padding: 0 10px;
+  font: 600 11px/1.2 var(--sans);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ra-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  color: var(--ink2);
+  text-decoration: none;
+}
+
+.ra-link:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.ra-link[aria-current='page'] {
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+
+.ra-link[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+}
+
+.ra-link svg {
+  flex: none;
+  color: var(--muted);
+}
+
+.ra-link[aria-current='page'] svg {
+  color: var(--ink);
+}
+
+.ra-count {
+  margin-left: auto;
+  min-width: 24px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--mark);
+  font: 600 11px/1.3 var(--mono);
+  text-align: center;
+  color: var(--ink);
+}
+
+.ra-count.is-zero {
+  background: transparent;
+  color: var(--muted);
+}
+
+.ra-foot {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 8px 4px;
+  border-top: 1px solid var(--rule);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ra-foot small {
+  display: block;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.ra-av {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--avatar-from), var(--avatar-to));
+  color: #fff;
+  font: 600 11.5px/1 var(--sans);
+}
+
+/* ---------- Top bar ---------- */
+.ra-main {
+  min-width: 0;
+}
+
+.ra-top {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: var(--bar-h);
+  padding: 0 clamp(16px, 3vw, 40px);
+  background: var(--paper-glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--rule);
+}
+
+.ra-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 0 auto 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.ra-crumbs li {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ra-crumbs li + li::before {
+  content: '/';
+  margin-right: 8px;
+  color: var(--rule-strong);
+}
+
+.ra-crumbs li[aria-current='page'] {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.ra-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.ra-menu,
+.ra-top-brand {
+  display: none;
+}
+
+.ra-content {
+  padding: clamp(20px, 3vw, 36px) clamp(16px, 3vw, 40px) 96px;
+}
+
+/* ---------- Drawer ---------- */
+.ra-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+}
+
+.ra-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--scrim);
+}
+
+.ra-drawer-panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: min(300px, 86vw);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px 14px 14px;
+  background: var(--rail);
+  box-shadow: var(--shadow-pop);
+  overflow-y: auto;
+}
+
+.ra-drawer-close {
+  position: absolute;
+  top: 14px;
+  right: 12px;
+}
+
+/* ---------- Page treatment in A ---------- */
+.app-a .card {
+  background: var(--surface);
+}
+
+.app-a .table th {
+  border-bottom-color: var(--ink);
+}
+
+@media (max-width: 1024px) {
+  .app-a {
+    grid-template-columns: 1fr;
+  }
+  .ra-rail {
+    display: none;
+  }
+  .ra-menu,
+  .ra-top-brand {
+    display: grid;
+  }
+  .ra-top-brand {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 560px) {
+  .ra-top .sample-chip,
+  .ra-top .btn span {
+    display: none;
+  }
+  .ra-top .btn {
+    width: 34px;
+    padding: 0;
+  }
+  .ra-crumbs li:not(:last-child) {
+    display: none;
+  }
+}

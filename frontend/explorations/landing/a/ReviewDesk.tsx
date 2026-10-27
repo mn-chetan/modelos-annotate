@@ -7,7 +7,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { motion, MotionConfig } from 'motion/react';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { BrandLockup } from '../../../src/brand/BrandLockup';
-import { WORKSPACE_HREF, capabilities, streetBoxes, workflow, type Modality } from '../content';
+import { workspaceHref, capabilities, streetBoxes, workflow, type Modality } from '../../../src/showcase/content';
 import {
   DetectionFrame,
   EntityText,
@@ -16,7 +16,7 @@ import {
   PiiFrame,
   TrackFrame,
   type Stage,
-} from '../specimens';
+} from '../../../src/showcase/specimens';
 import './a.css';
 
 const reveal = {
@@ -81,7 +81,7 @@ export default function ReviewDesk() {
             <a href="#workflow">Workflow</a>
             <a href="#quality">Quality</a>
           </nav>
-          <a className="a-btn a-btn-ink a-btn-sm" href={WORKSPACE_HREF}>
+          <a className="a-btn a-btn-ink a-btn-sm" href={workspaceHref('a')}>
             Open workspace
           </a>
         </header>
@@ -100,7 +100,7 @@ export default function ReviewDesk() {
                 person, and audits the result before it leaves.
               </p>
               <div className="a-actions">
-                <a className="a-btn a-btn-ink" href={WORKSPACE_HREF}>
+                <a className="a-btn a-btn-ink" href={workspaceHref('a')}>
                   Open workspace <ArrowRight size={16} aria-hidden />
                 </a>
                 <a className="a-link" href="#workflow">
@@ -230,7 +230,7 @@ export default function ReviewDesk() {
             <motion.div {...reveal}>
               <h2 className="a-display a-display-sm">Start with a project.</h2>
               <p className="a-lede">Bring a dataset, name the classes, and let the first pass run.</p>
-              <a className="a-btn a-btn-ink" href={WORKSPACE_HREF}>
+              <a className="a-btn a-btn-ink" href={workspaceHref('a')}>
                 Open workspace <ArrowUpRight size={16} aria-hidden />
               </a>
             </motion.div>

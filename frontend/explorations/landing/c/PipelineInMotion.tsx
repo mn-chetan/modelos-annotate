@@ -17,15 +17,15 @@ import {
 import { ArrowRight } from 'lucide-react';
 import { BrandLockup } from '../../../src/brand/BrandLockup';
 import {
-  WORKSPACE_HREF,
+  workspaceHref,
   capabilities,
   exportSample,
   images,
   streetBoxes,
   workflow,
   type Modality,
-} from '../content';
-import { DetectionFrame, EntityText, Filmstrip, PiiFrame, TrackFrame } from '../specimens';
+} from '../../../src/showcase/content';
+import { DetectionFrame, EntityText, Filmstrip, PiiFrame, TrackFrame } from '../../../src/showcase/specimens';
 import './c.css';
 
 const ease = [0.22, 0.8, 0.26, 1] as const;
@@ -85,7 +85,7 @@ function Hero() {
           transition={{ duration: 0.7, ease, delay: 0.35 }}
         >
           <p>AI drafts every label. People correct it. Quality checks approve it.</p>
-          <a className="c-btn c-btn-light" href={WORKSPACE_HREF}>
+          <a className="c-btn c-btn-light" href={workspaceHref('b')}>
             Open workspace <ArrowRight size={16} aria-hidden />
           </a>
         </motion.div>
@@ -424,7 +424,7 @@ export default function PipelineInMotion() {
           <nav aria-label="Sections">
             <a href="#workflow">Workflow</a>
             <a href="#capabilities">Capabilities</a>
-            <a className="c-btn c-btn-light c-btn-sm" href={WORKSPACE_HREF}>
+            <a className="c-btn c-btn-light c-btn-sm" href={workspaceHref('b')}>
               Open workspace
             </a>
           </nav>
@@ -445,7 +445,7 @@ export default function PipelineInMotion() {
             >
               Ground truth, <em>reviewed.</em>
             </motion.h2>
-            <a className="c-btn c-btn-light" href={WORKSPACE_HREF}>
+            <a className="c-btn c-btn-light" href={workspaceHref('b')}>
               Open workspace <ArrowRight size={16} aria-hidden />
             </a>
           </section>

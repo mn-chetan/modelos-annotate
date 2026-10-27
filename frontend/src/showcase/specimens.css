@@ -328,3 +328,10 @@
   border: 2px solid var(--mark-strong);
   border-radius: 2px;
 }
+
+.spec-crop-box.is-masked {
+  border-color: transparent;
+  background: rgba(30, 30, 34, 0.62);
+  backdrop-filter: blur(4px) saturate(0.4);
+  -webkit-backdrop-filter: blur(4px) saturate(0.4);
+}

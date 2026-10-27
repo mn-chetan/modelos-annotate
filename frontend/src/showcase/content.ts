@@ -8,7 +8,8 @@ import busesUrl from './assets/buses.webp';
 
 export const images = { street: streetUrl, buses: busesUrl };
 
-export const WORKSPACE_HREF = '/app1/';
+/** Where each landing direction's "Open workspace" leads: the matching app shell. */
+export const workspaceHref = (shell: 'a' | 'b') => `/app1/next.html?v=${shell}#/projects`;
 
 export type Modality = 'image' | 'text' | 'video';
 
@@ -138,3 +139,169 @@ export const exportSample = `{
   "review": { "action": "corrected" },
   "qc": { "status": "approved" }
 }`;
+
+/* ---------- Sample projects for the app shell showcase ---------- */
+
+export type TaskView = 'detection' | 'pii' | 'ner' | 'sentiment' | 'tracking';
+
+export type Project = {
+  id: string;
+  name: string;
+  modality: Modality;
+  task: string;
+  view: TaskView;
+  unit: string;
+  assets: number;
+  aiDone: number;
+  reviewPending: number;
+  qcPending: number;
+  approved: number;
+  updated: string;
+  lead: string;
+  classes: string[];
+};
+
+export const projects: Project[] = [
+  {
+    id: 'urban-traffic',
+    name: 'Urban traffic detection',
+    modality: 'image',
+    task: 'Object detection',
+    view: 'detection',
+    unit: 'images',
+    assets: 1240,
+    aiDone: 1240,
+    reviewPending: 86,
+    qcPending: 12,
+    approved: 1142,
+    updated: '12 min ago',
+    lead: 'Anika Rao',
+    classes: ['car', 'bus', 'truck', 'motorcycle', 'cyclist', 'person'],
+  },
+  {
+    id: 'retail-pii',
+    name: 'Street camera PII',
+    modality: 'image',
+    task: 'PII masking',
+    view: 'pii',
+    unit: 'images',
+    assets: 860,
+    aiDone: 860,
+    reviewPending: 24,
+    qcPending: 9,
+    approved: 827,
+    updated: '1 h ago',
+    lead: 'Marcus Lee',
+    classes: ['number plate', 'face'],
+  },
+  {
+    id: 'ops-entities',
+    name: 'Operations report entities',
+    modality: 'text',
+    task: 'Named entities',
+    view: 'ner',
+    unit: 'documents',
+    assets: 3200,
+    aiDone: 2950,
+    reviewPending: 140,
+    qcPending: 30,
+    approved: 2780,
+    updated: '3 h ago',
+    lead: 'Sara Okafor',
+    classes: ['Person', 'Organisation', 'Location', 'Date'],
+  },
+  {
+    id: 'ticket-sentiment',
+    name: 'Support ticket sentiment',
+    modality: 'text',
+    task: 'Sentiment',
+    view: 'sentiment',
+    unit: 'tickets',
+    assets: 5400,
+    aiDone: 5400,
+    reviewPending: 0,
+    qcPending: 0,
+    approved: 5400,
+    updated: 'Yesterday',
+    lead: 'Daniel Costa',
+    classes: ['Positive', 'Neutral', 'Negative'],
+  },
+  {
+    id: 'junction-tracking',
+    name: 'Junction camera tracking',
+    modality: 'video',
+    task: 'Object tracking',
+    view: 'tracking',
+    unit: 'clips',
+    assets: 48,
+    aiDone: 48,
+    reviewPending: 6,
+    qcPending: 2,
+    approved: 40,
+    updated: '2 days ago',
+    lead: 'Priya Nair',
+    classes: ['car', 'bus', 'truck', 'motorcycle', 'cyclist'],
+  },
+];
+
+/** More text specimens so lists don't repeat one sentence. */
+export const textSamples: { id: string; spans: Span[] }[] = [
+  { id: 'ops-report-0217', spans: textSample },
+  {
+    id: 'ops-report-0218',
+    spans: [
+      { text: 'On ' },
+      { text: '2 April', type: 'DATE', conf: 0.96 },
+      { text: ', ' },
+      { text: 'Halden Freight', type: 'ORG', conf: 0.94 },
+      { text: ' moved its night shift from ' },
+      { text: 'Nashik', type: 'LOC', conf: 0.9 },
+      { text: ' to the ' },
+      { text: 'Pune', type: 'LOC', conf: 0.88 },
+      { text: ' depot.' },
+    ],
+  },
+  {
+    id: 'ops-report-0221',
+    spans: [
+      { text: 'Tomás Reyes', type: 'PERSON', conf: 0.97 },
+      { text: ' signed the renewal with ' },
+      { text: 'Corvel Logistics', type: 'ORG', conf: 0.66 },
+      { text: ' after a review on ' },
+      { text: '9 May', type: 'DATE', conf: 0.95 },
+      { text: '.' },
+    ],
+  },
+  {
+    id: 'ops-report-0224',
+    spans: [
+      { text: 'The ' },
+      { text: 'Chennai', type: 'LOC', conf: 0.93 },
+      { text: ' team, led by ' },
+      { text: 'Meera Shah', type: 'PERSON', conf: 0.98 },
+      { text: ', closed the audit two weeks ahead of plan.' },
+    ],
+  },
+];
+
+export type Sentiment = 'Positive' | 'Neutral' | 'Negative';
+
+export const tickets: { id: string; text: string; ai: Sentiment; conf: number; fix?: Sentiment }[] = [
+  { id: 'TCK-40121', text: 'The replacement arrived a day early and works perfectly. Thank you.', ai: 'Positive', conf: 0.97 },
+  { id: 'TCK-40122', text: 'Still waiting on a refund after three emails. Not great.', ai: 'Negative', conf: 0.94 },
+  { id: 'TCK-40125', text: 'Can you confirm the warranty covers the charging cable?', ai: 'Neutral', conf: 0.9 },
+  { id: 'TCK-40127', text: 'Great, another update that resets all my settings.', ai: 'Positive', conf: 0.55, fix: 'Negative' },
+  { id: 'TCK-40130', text: 'Setup took five minutes. The guide was clear.', ai: 'Positive', conf: 0.95 },
+];
+
+/** Fourteen days of approvals for the Reports chart (illustrative). */
+export const approvalsByDay = [62, 71, 58, 80, 94, 41, 38, 88, 97, 102, 91, 85, 44, 39];
+
+/** Corrections reviewers made, per class (illustrative). */
+export const correctionsByClass: Record<TaskView, [string, number][]> = {
+  detection: [['person', 31], ['car', 12], ['cyclist', 9], ['truck', 4], ['bus', 2]],
+  pii: [['face', 14], ['number plate', 6]],
+  ner: [['Organisation', 22], ['Location', 17], ['Person', 6], ['Date', 3]],
+  sentiment: [['Positive', 19], ['Neutral', 11], ['Negative', 7]],
+  tracking: [['ID switch', 9], ['cyclist', 5], ['motorcycle', 3]],
+};

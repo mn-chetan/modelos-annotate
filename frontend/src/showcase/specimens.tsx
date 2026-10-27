@@ -207,7 +207,19 @@ export function Filmstrip({
 }
 
 /** Zooms the street frame onto one object, with padding around its box (in % of frame). */
-export function ObjectCrop({ box, pad = 3, className = '' }: { box: Box; pad?: number; className?: string }) {
+export function ObjectCrop({
+  box,
+  pad = 3,
+  className = '',
+  src = images.street,
+  masked = false,
+}: {
+  box: Box;
+  pad?: number;
+  className?: string;
+  src?: string;
+  masked?: boolean;
+}) {
   const x = Math.max(0, box.x - pad);
   const y = Math.max(0, box.y - pad * 1.5);
   const w = Math.min(100 - x, box.w + pad * 2);
@@ -215,7 +227,7 @@ export function ObjectCrop({ box, pad = 3, className = '' }: { box: Box; pad?: n
   return (
     <div className={`spec-crop ${className}`} style={{ aspectRatio: `${w * 1376} / ${h * 768}` }}>
       <img
-        src={images.street}
+        src={src}
         alt=""
         style={{
           width: `${(100 / w) * 100}%`,
@@ -225,7 +237,7 @@ export function ObjectCrop({ box, pad = 3, className = '' }: { box: Box; pad?: n
         }}
       />
       <div
-        className="spec-crop-box"
+        className={`spec-crop-box${masked ? ' is-masked' : ''}`}
         style={{
           left: `${((box.x - x) / w) * 100}%`,
           top: `${((box.y - y) / h) * 100}%`,

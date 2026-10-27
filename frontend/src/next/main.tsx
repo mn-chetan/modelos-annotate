@@ -9,11 +9,10 @@ import { useCurrentProject } from './useProject';
 import { Shell } from './shell/Shell';
 import { ProjectsPage } from './pages/Projects';
 import { NewProjectPage } from './pages/new-project/NewProject';
-import { OverviewPage } from './pages/Overview';
+import { OverviewPage } from './pages/overview/Overview';
 import { AiResultsPage } from './pages/AiResults';
 import { ReviewPage } from './pages/Review';
 import { QualityPage } from './pages/Quality';
-import { ReportsPage } from './pages/Reports';
 import { AdminPage } from './pages/Admin';
 import type { Project } from '../showcase/content';
 
@@ -35,8 +34,6 @@ function page(route: Route, project: Project) {
           return <ReviewPage project={project} />;
         case 'quality':
           return <QualityPage project={project} />;
-        case 'reports':
-          return <ReportsPage project={project} />;
       }
   }
 }

@@ -3,7 +3,6 @@
  * The rail renders from it, so labels and routes are defined once.
  */
 import {
-  ChartColumn,
   FolderOpen,
   FolderPlus,
   House,
@@ -28,7 +27,6 @@ export const PROJECT_TABS: readonly TabItem[] = [
   { tab: 'ai', label: 'AI results', icon: Sparkles },
   { tab: 'review', label: 'Review', icon: ScanEye, badge: (p) => p.reviewPending },
   { tab: 'quality', label: 'Quality check', icon: ShieldCheck, badge: (p) => p.qcPending },
-  { tab: 'reports', label: 'Reports', icon: ChartColumn },
 ];
 
 export type WorkspaceItem = { id: 'projects' | 'new' | 'admin'; label: string; icon: LucideIcon; route: Route };

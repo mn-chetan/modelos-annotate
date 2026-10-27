@@ -15,10 +15,10 @@ export function EmptyState({ title, line, project }: { title: string; line: stri
       <h2>{title}</h2>
       <p>{line}</p>
       <div className="page-actions">
-        <a className="btn btn-ghost" href={projectHref(project.id, 'reports')}>
-          Open reports
+        <a className="btn btn-ghost" href={projectHref(project.id)}>
+          Open overview
         </a>
-        <a className="btn btn-primary" href={projectHref(project.id, 'reports')}>
+        <a className="btn btn-primary" href={projectHref(project.id)}>
           <Download size={16} aria-hidden /> Export labels
         </a>
       </div>

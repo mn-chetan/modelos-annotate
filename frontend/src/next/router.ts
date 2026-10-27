@@ -9,7 +9,7 @@
  */
 import { useSyncExternalStore } from 'react';
 
-export type ProjectTab = 'overview' | 'ai' | 'review' | 'quality' | 'reports';
+export type ProjectTab = 'overview' | 'ai' | 'review' | 'quality';
 
 export type Route =
   | { id: 'projects' }
@@ -17,7 +17,8 @@ export type Route =
   | { id: 'admin' }
   | { id: 'project'; projectId: string; tab: ProjectTab };
 
-const TABS: readonly ProjectTab[] = ['overview', 'ai', 'review', 'quality', 'reports'];
+// Reports folded into Overview; old #/p/:id/reports links fall back to it.
+const TABS: readonly ProjectTab[] = ['overview', 'ai', 'review', 'quality'];
 
 export function parse(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);

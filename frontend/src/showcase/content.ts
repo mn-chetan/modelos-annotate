@@ -277,15 +277,3 @@ export const tickets: { id: string; text: string; ai: Sentiment; conf: number; f
   { id: 'TCK-40127', text: 'Great, another update that resets all my settings.', ai: 'Positive', conf: 0.55, fix: 'Negative' },
   { id: 'TCK-40130', text: 'Setup took five minutes. The guide was clear.', ai: 'Positive', conf: 0.95 },
 ];
-
-/** Fourteen days of approvals for the Reports chart (illustrative). */
-export const approvalsByDay = [62, 71, 58, 80, 94, 41, 38, 88, 97, 102, 91, 85, 44, 39];
-
-/** Corrections reviewers made, per class (illustrative). */
-export const correctionsByClass: Record<TaskView, [string, number][]> = {
-  detection: [['person', 31], ['car', 12], ['cyclist', 9], ['truck', 4], ['bus', 2]],
-  pii: [['face', 14], ['number plate', 6]],
-  ner: [['Organisation', 22], ['Location', 17], ['Person', 6], ['Date', 3]],
-  sentiment: [['Positive', 19], ['Neutral', 11], ['Negative', 7]],
-  tracking: [['ID switch', 9], ['cyclist', 5], ['motorcycle', 3]],
-};

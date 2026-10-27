@@ -37,5 +37,13 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "include": [
+    "src/next",
+    "src/landing",
+    "src/brand",
+    "src/showcase",
+    "src/services/api.ts",
+    "vite.config.ts"
+  ]
 }

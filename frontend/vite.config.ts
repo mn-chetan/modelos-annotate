@@ -6,6 +6,7 @@ export default defineConfig(() => {
   return {
     base: process.env.VITE_BASE || '/app1/',
     plugins: [react(), tailwindcss()],
+    build: { rollupOptions: { input: { landing: 'index.html', landingAlias: 'landing.html', workspace: 'next.html' } } },
     resolve: {
       dedupe: ['react', 'react-dom', 'lucide-react'],
       alias: {

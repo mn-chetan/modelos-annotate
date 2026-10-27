@@ -1,20 +1,15 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# ModelOS Annotate frontend
 
-# Run and deploy your AI Studio app
+The Vite build contains the editorial landing (`index.html` and `landing.html`) and approved React workspace (`next.html`). All are served under `/app1/`.
 
-This contains everything you need to run your app locally.
+See [the demo guide](../DEMO.md) for backend/runtime setup, startup commands, workflow, verification and limitations.
 
-View your app in AI Studio: https://ai.studio/apps/32dd9fbb-edc1-42ba-a8fe-687e1a79bc65
+```bash
+npm ci
+npm run lint
+npm run build
+npm test
+VITE_BACKEND_URL=http://127.0.0.1:8011 npm run dev
+```
 
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Type checking targets the active landing/workspace and their shared dependencies. The original application remains in source/history and is excluded from the active build.

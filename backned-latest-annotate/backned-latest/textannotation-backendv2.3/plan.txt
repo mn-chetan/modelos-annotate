@@ -1,0 +1,811 @@
+Build a complete, production-ready backend for a Text Annotation / Classification System using Python FastAPI + MongoDB + Gemini Flash.
+ 
+Do NOT build a frontend.
+ 
+The frontend already exists and will send either:
+ 
+1. Direct text entered into a textarea
+2. An uploaded PDF
+3. An uploaded DOCX
+4. An uploaded TXT file
+5. An uploaded image such as JPG/JPEG/PNG
+ 
+The user will choose one of ONLY TWO analysis types:
+ 
+- "ENTITY_EXTRACTION"
+- "SENTIMENT_ANALYSIS"
+ 
+The backend must process the input, perform the selected analysis, return structured JSON, and save the result in MongoDB.
+ 
+---
+ 
+1. Technology Stack
+ 
+Use:
+ 
+- Python 3.12+
+- FastAPI
+- Uvicorn
+- MongoDB
+- PyMongo async API or an appropriate async MongoDB driver
+- Pydantic
+- Google Gemini Flash
+- PyMuPDF for PDF extraction
+- python-docx for DOCX extraction
+- OCR abstraction for images/scanned PDFs
+- python-multipart
+- pytest
+- Docker
+- Docker Compose
+ 
+Do NOT use:
+ 
+- PostgreSQL
+- YOLO
+ 
+Keep the Gemini model configurable.
+ 
+Environment variables:
+ 
+GEMINI_API_KEY=
+GEMINI_MODEL=
+MONGODB_URI=
+MONGODB_DATABASE=text_annotation
+MAX_UPLOAD_SIZE_MB=20
+ 
+Never hard-code credentials.
+ 
+---
+ 
+2. Input Types
+ 
+The API must support two input modes.
+ 
+Mode 1 — Direct Text
+ 
+Example:
+ 
+The medicine worked well for me and the packaging was good.
+ 
+The frontend can send this directly without uploading a file.
+ 
+Mode 2 — File Upload
+ 
+Supported:
+ 
+PDF
+DOCX
+TXT
+JPG
+JPEG
+PNG
+ 
+Extract text from the uploaded file before performing analysis.
+ 
+---
+ 
+3. API Design
+ 
+Create:
+ 
+POST /api/v1/annotations/analyze
+ 
+Use "multipart/form-data" so the endpoint can support both text and files.
+ 
+Parameters:
+ 
+analysis_type:
+    ENTITY_EXTRACTION
+    SENTIMENT_ANALYSIS
+ 
+text:
+    optional string
+ 
+file:
+    optional UploadFile
+ 
+drug_name:
+    optional string
+ 
+Validation rules:
+ 
+- Either "text" OR "file" must be supplied.
+- Do not require both.
+- Reject the request if both are missing.
+- "drug_name" is required when "analysis_type=ENTITY_EXTRACTION".
+- "drug_name" is not required for "SENTIMENT_ANALYSIS".
+ 
+Example direct sentiment request:
+ 
+analysis_type=SENTIMENT_ANALYSIS
+text=The medicine worked well for me and the packaging was good.
+ 
+Example entity request:
+ 
+analysis_type=ENTITY_EXTRACTION
+drug_name=Paracetamol
+file=medicine_ingredients.pdf
+ 
+Also support:
+ 
+analysis_type=ENTITY_EXTRACTION
+drug_name=Paracetamol
+text=Each tablet contains Paracetamol 500 mg and Caffeine 30 mg.
+ 
+---
+ 
+4. Common Processing Pipeline
+ 
+Implement:
+ 
+                  REQUEST
+                     |
+          +----------+----------+
+          |                     |
+     Direct Text            Uploaded File
+          |                     |
+          |            +--------+--------+
+          |            |        |        |
+          |           PDF     DOCX     IMAGE
+          |            |        |        |
+          |         Extract   Extract    OCR
+          |            |        |        |
+          +------------+--------+--------+
+                       |
+                 Normalized Text
+                       |
+                analysis_type
+                       |
+              +--------+--------+
+              |                 |
+      ENTITY_EXTRACTION    SENTIMENT_ANALYSIS
+              |                 |
+        Drug Matching          Gemini
+              |                 |
+        Gemini only when       Sentiment
+        semantic validation    Classification
+        is required             |
+              |                 |
+              +--------+--------+
+                       |
+                    MongoDB
+                       |
+                 JSON Response
+ 
+---
+ 
+5. Text Extraction
+ 
+Create:
+ 
+TextExtractionService
+ 
+If direct "text" is supplied, do NOT perform file extraction.
+ 
+Normalize the supplied text and continue directly to analysis.
+ 
+For files:
+ 
+PDF
+ 
+Use PyMuPDF.
+ 
+Preserve page numbers.
+ 
+Example:
+ 
+{
+  "pages": [
+    {
+      "page": 1,
+      "text": "..."
+    },
+    {
+      "page": 2,
+      "text": "..."
+    }
+  ]
+}
+ 
+If the PDF has little/no extractable text, treat it as a scanned PDF and use OCR.
+ 
+DOCX
+ 
+Use python-docx.
+ 
+Extract:
+ 
+- paragraphs
+- tables
+ 
+TXT
+ 
+Read text with safe encoding handling.
+ 
+Images
+ 
+Use OCR.
+ 
+Support:
+ 
+.jpg
+.jpeg
+.png
+ 
+Create:
+ 
+OCRService
+ 
+Keep OCR behind an abstraction so the provider can later be replaced.
+ 
+---
+ 
+6. ENTITY EXTRACTION — DRUG PRESENCE CHECK
+ 
+This application's entity extraction has a specific purpose.
+ 
+The frontend provides a drug/ingredient name.
+ 
+Example:
+ 
+drug_name=Paracetamol
+ 
+The uploaded/extracted/direct text may contain:
+ 
+Each tablet contains:
+ 
+Paracetamol 500 mg
+Caffeine 30 mg
+Phenylephrine Hydrochloride 5 mg
+ 
+The backend must determine whether the requested drug/ingredient appears in the supplied content.
+ 
+Do NOT rely exclusively on Gemini for this.
+ 
+Implement a deterministic-first pipeline.
+ 
+---
+ 
+7. Drug Matching Pipeline
+ 
+Implement:
+ 
+Extracted / Direct Text
+          |
+      Normalize
+          |
+   Exact Matching
+          |
+   Case-insensitive
+      Matching
+          |
+  Normalized Matching
+          |
+   Fuzzy Matching
+          |
+ Gemini Validation
+ only when required
+          |
+     Final Result
+ 
+Normalization should account for:
+ 
+- uppercase/lowercase
+- extra whitespace
+- punctuation
+- line breaks
+- OCR spacing differences
+ 
+Example:
+ 
+PARACETAMOL
+Paracetamol
+paracetamol
+ 
+should be treated consistently.
+ 
+Use an appropriate fuzzy matching library such as RapidFuzz.
+ 
+Configure the fuzzy-match threshold through settings.
+ 
+Do NOT allow a weak fuzzy match alone to produce a high-confidence medical ingredient match.
+ 
+---
+ 
+8. Gemini Entity Validation
+ 
+Gemini should be used only when semantic validation is required.
+ 
+Examples include:
+ 
+- ingredient aliases
+- abbreviations
+- salt forms
+- OCR variations
+- complex ingredient descriptions
+ 
+Gemini must NOT invent an ingredient.
+ 
+Gemini must determine whether the requested ingredient is supported by the supplied text.
+ 
+Require strict structured output.
+ 
+Example response:
+ 
+{
+  "analysis_type": "ENTITY_EXTRACTION",
+  "searched_drug": "Paracetamol",
+  "found": true,
+  "match_type": "EXACT",
+  "matches": [
+    {
+      "matched_text": "Paracetamol 500 mg",
+      "ingredient": "Paracetamol",
+      "strength": "500 mg",
+      "page": 1
+    }
+  ]
+}
+ 
+Possible "match_type" values:
+ 
+EXACT
+NORMALIZED
+FUZZY
+SEMANTIC
+NOT_FOUND
+ 
+If not found:
+ 
+{
+  "analysis_type": "ENTITY_EXTRACTION",
+  "searched_drug": "Ibuprofen",
+  "found": false,
+  "match_type": "NOT_FOUND",
+  "matches": []
+}
+ 
+Do not interpret "found=true" as meaning the drug is safe, recommended, equivalent, effective, or suitable for a patient.
+ 
+It only means the ingredient appears to be present in the supplied content.
+ 
+---
+ 
+9. Important Medical Safety Rule
+ 
+This system performs DOCUMENT/TEXT ANALYSIS.
+ 
+It is NOT a clinical decision system.
+ 
+Never generate claims such as:
+ 
+This medicine is safe for you.
+ 
+You should take this medicine.
+ 
+This medicine can replace another medicine.
+ 
+This dosage is appropriate.
+ 
+This medicine will treat your condition.
+ 
+Only report information supported by the supplied document/text.
+ 
+For example:
+ 
+Paracetamol 500 mg was detected in the supplied ingredient text.
+ 
+is acceptable.
+ 
+---
+ 
+10. SENTIMENT ANALYSIS
+ 
+For:
+ 
+analysis_type=SENTIMENT_ANALYSIS
+ 
+use Gemini Flash.
+ 
+Example input:
+ 
+The medicine worked well for me and the packaging was good.
+ 
+Return:
+ 
+{
+  "analysis_type": "SENTIMENT_ANALYSIS",
+  "sentiment": "POSITIVE",
+  "confidence": 0.94,
+  "reason": "The text expresses satisfaction with the medicine and its packaging."
+}
+ 
+Support ONLY:
+ 
+POSITIVE
+NEGATIVE
+NEUTRAL
+MIXED
+ 
+Example negative input:
+ 
+The packaging was damaged and the product did not meet my expectations.
+ 
+Response:
+ 
+{
+  "analysis_type": "SENTIMENT_ANALYSIS",
+  "sentiment": "NEGATIVE",
+  "confidence": 0.95,
+  "reason": "The text expresses dissatisfaction with the product and packaging."
+}
+ 
+Example mixed:
+ 
+The medicine worked well but the packaging was damaged.
+ 
+Response:
+ 
+{
+  "analysis_type": "SENTIMENT_ANALYSIS",
+  "sentiment": "MIXED",
+  "confidence": 0.90,
+  "reason": "The text contains positive feedback about the medicine but negative feedback about the packaging."
+}
+ 
+Require Gemini to return structured JSON.
+ 
+Validate Gemini output using Pydantic.
+ 
+Do not save unvalidated Gemini output.
+ 
+---
+ 
+11. Large Text/Documents
+ 
+Do not send arbitrarily large extracted text to Gemini in a single request.
+ 
+Implement configurable chunking.
+ 
+Prefer:
+ 
+Page boundaries
+↓
+Paragraph boundaries
+↓
+Sentence boundaries
+ 
+For sentiment:
+ 
+Large Document
+      |
+    Chunks
+      |
+ Gemini per chunk
+      |
+ Aggregate
+      |
+Overall Sentiment
+ 
+Preserve segment-level results when useful.
+ 
+For drug/entity matching, search all chunks/pages and combine matching evidence.
+ 
+---
+ 
+12. MongoDB
+ 
+Use MongoDB.
+ 
+Create two collections:
+ 
+sources
+analyses
+ 
+sources Collection
+ 
+Store the input source.
+ 
+Example direct-text source:
+ 
+{
+  "_id": "ObjectId",
+  "source_id": "UUID",
+  "source_type": "TEXT",
+  "original_filename": null,
+  "text": "The medicine worked well for me...",
+  "created_at": "datetime"
+}
+ 
+Example file source:
+ 
+{
+  "_id": "ObjectId",
+  "source_id": "UUID",
+  "source_type": "PDF",
+  "original_filename": "ingredients.pdf",
+  "mime_type": "application/pdf",
+  "file_size": 123456,
+  "extracted_text": "...",
+  "pages": [
+    {
+      "page": 1,
+      "text": "..."
+    }
+  ],
+  "created_at": "datetime"
+}
+ 
+analyses Collection
+ 
+Example entity analysis:
+ 
+{
+  "_id": "ObjectId",
+  "analysis_id": "UUID",
+  "source_id": "UUID",
+  "analysis_type": "ENTITY_EXTRACTION",
+  "searched_drug": "Paracetamol",
+  "status": "COMPLETED",
+  "result": {
+    "found": true,
+    "match_type": "EXACT",
+    "matches": [
+      {
+        "matched_text": "Paracetamol 500 mg",
+        "ingredient": "Paracetamol",
+        "strength": "500 mg",
+        "page": 1
+      }
+    ]
+  },
+  "created_at": "datetime"
+}
+ 
+Example sentiment:
+ 
+{
+  "_id": "ObjectId",
+  "analysis_id": "UUID",
+  "source_id": "UUID",
+  "analysis_type": "SENTIMENT_ANALYSIS",
+  "status": "COMPLETED",
+  "model_name": "configured Gemini model",
+  "result": {
+    "sentiment": "POSITIVE",
+    "confidence": 0.94,
+    "reason": "The text expresses satisfaction with the product."
+  },
+  "created_at": "datetime"
+}
+ 
+Create indexes on:
+ 
+sources.source_id
+sources.created_at
+ 
+analyses.analysis_id
+analyses.source_id
+analyses.analysis_type
+analyses.searched_drug
+analyses.created_at
+ 
+Use unique indexes for:
+ 
+source_id
+analysis_id
+ 
+---
+ 
+13. Gemini Service
+ 
+Create:
+ 
+GeminiService
+ 
+Responsibilities:
+ 
+- Gemini API communication
+- sentiment prompts
+- semantic entity-validation prompts
+- structured output
+- JSON parsing
+- retries
+- timeout handling
+- error handling
+- Pydantic validation
+ 
+Keep Gemini prompts separate from business logic.
+ 
+Example:
+ 
+prompts/
+    sentiment_prompt.py
+    drug_validation_prompt.py
+ 
+Keep the Gemini model configurable:
+ 
+GEMINI_MODEL
+ 
+Do not hard-code a specific Gemini model version.
+ 
+---
+ 
+14. Project Structure
+ 
+Generate:
+ 
+app/
+├── main.py
+│
+├── api/
+│   └── routes/
+│       └── annotations.py
+│
+├── core/
+│   ├── config.py
+│   ├── exceptions.py
+│   └── logging.py
+│
+├── schemas/
+│   ├── source.py
+│   ├── entity.py
+│   ├── sentiment.py
+│   └── analysis.py
+│
+├── services/
+│   ├── text_extraction_service.py
+│   ├── drug_matching_
+ 
+14. Project Structure
+ 
+Keep the backend simple and modular:
+ 
+app/
+├── main.py
+├── routes/
+│   └── annotations.py
+├── services/
+│   ├── extraction_service.py
+│   ├── drug_matching_service.py
+│   ├── sentiment_service.py
+│   ├── gemini_service.py
+│   └── ocr_service.py
+├── database/
+│   └── mongodb.py
+├── models/
+│   └── schemas.py
+└── prompts/
+    ├── sentiment.py
+    └── drug_validation.py
+ 
+tests/
+Dockerfile
+docker-compose.yml
+requirements.txt
+.env.example
+README.md
+ 
+Keep route handlers small. Business logic must be inside services.
+ 
+15. Error Handling
+ 
+Handle common errors:
+ 
+- No text or file provided
+- Unsupported/corrupted file
+- Empty extracted text
+- "drug_name" missing for ENTITY_EXTRACTION
+- OCR failure
+- Gemini failure/timeout
+- Invalid Gemini response
+- MongoDB failure
+ 
+Return simple structured errors:
+ 
+{
+  "error": {
+    "code": "DRUG_NAME_REQUIRED",
+    "message": "drug_name is required for entity extraction."
+  }
+}
+ 
+16. Security & Logging
+ 
+Validate file type and file size.
+ 
+Use environment variables for:
+ 
+GEMINI_API_KEY
+GEMINI_MODEL
+MONGODB_URI
+MONGODB_DATABASE
+ 
+Never log API keys, MongoDB credentials, or complete uploaded medical content.
+ 
+Use UUIDs for "source_id" and "analysis_id".
+ 
+Delete temporary uploaded files after processing.
+ 
+17. Health Check
+ 
+Create:
+ 
+GET /health
+ 
+Return:
+ 
+{
+  "status": "healthy",
+  "mongodb": "connected"
+}
+ 
+18. Testing
+ 
+Add basic pytest tests for:
+ 
+- Direct textarea input
+- PDF/DOCX/TXT extraction
+- Image OCR
+- Exact drug match
+- Drug not found
+- Fuzzy/semantic drug match
+- Positive sentiment
+- Negative sentiment
+- Neutral sentiment
+- Mixed sentiment
+- Gemini failure
+- MongoDB failure
+ 
+Mock Gemini and OCR during unit tests.
+ 
+19. Docker
+ 
+Provide:
+ 
+- Dockerfile
+- docker-compose.yml
+ 
+Docker Compose should run:
+ 
+FastAPI → MongoDB
+ 
+20. Final Requirement
+ 
+Generate a complete runnable backend, not pseudocode.
+ 
+The final flow must be:
+ 
+Text Area OR File Upload
+        ↓
+If File → Extract Text / OCR
+        ↓
+Normalized Text
+        ↓
+   Analysis Type
+      /       \
+     /         \
+ENTITY       SENTIMENT
+  ↓              ↓
+Drug Name      Gemini
+  ↓              ↓
+Exact/Fuzzy    Positive
+Matching       Negative
+  ↓            Neutral
+Gemini if      Mixed
+required
+     \          /
+      \        /
+        MongoDB
+           ↓
+      JSON Response
+ 
+Only support:
+ 
+1. "ENTITY_EXTRACTION" — check whether the drug/ingredient entered by the user exists in the supplied text/document.
+2. "SENTIMENT_ANALYSIS" — classify text as POSITIVE, NEGATIVE, NEUTRAL, or MIXED.
+ 
+Do not add YOLO, PostgreSQL, frontend code, or additional classifications.
+ 
+Generate all required source code, "requirements.txt", ".env.example", Docker configuration, tests, and a README with instructions to run and test the API.
+ 

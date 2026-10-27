@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+:root {
+  --tm-white: #FFFFFF;
+  --tm-clarity-grey-1: #F6F2EA;
+  --tm-clarity-grey-2: #E5DFD3;
+  --tm-mahindra-red: #E31837;
+  --tm-clarity-red: #F8B4A3;
+  --tm-steel-grey: #4D4D4F;
+  --tm-anchor-grey-1: #4A453D;
+  --tm-impact-red: #5F0229;
+  --tm-anchor-grey-2: #29251D;
+  --tm-blueprint-navy: #0A0838;
+
+  --status-success: #247153;
+  --status-warning: #8A5200;
+  --status-info: #185F8D;
+  --status-error: #9C1936;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: #F6F2EA;
+  color: #29251D;
+}
+
+.data-numeric, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px #0A0838;
+}

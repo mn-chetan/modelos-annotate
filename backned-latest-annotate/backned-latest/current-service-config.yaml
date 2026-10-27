@@ -1,0 +1,131 @@
+﻿apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    run.googleapis.com/build-enable-automatic-updates: 'false'
+    run.googleapis.com/build-id: 2a16487e-4851-41ff-a5b3-6e6a9246dbcd
+    run.googleapis.com/build-image-uri: asia-south1-docker.pkg.dev/prod-y-in2300452/cloud-run-source-deploy/ingenii-annotate
+    run.googleapis.com/build-name: projects/792500770355/locations/asia-south1/builds/2a16487e-4851-41ff-a5b3-6e6a9246dbcd
+    run.googleapis.com/build-source-location: gs://run-sources-prod-y-in2300452-asia-south1/services/ingenii-annotate/1791366706.279879-89c9c2e098a7456599958d06ca98949d.zip#1791366939604324
+    run.googleapis.com/client-name: gcloud
+    run.googleapis.com/client-version: 564.0.0
+    run.googleapis.com/iap-enabled: 'true'
+    run.googleapis.com/ingress: internal-and-cloud-load-balancing
+    run.googleapis.com/ingress-status: internal-and-cloud-load-balancing
+    run.googleapis.com/maxScale: '100'
+    run.googleapis.com/operation-id: d548ca3e-6fd4-4676-8eaa-18dcbd9a14ff
+    run.googleapis.com/urls: '["https://ingenii-annotate-792500770355.asia-south1.run.app","https://ingenii-annotate-mmisgdrdaq-el.a.run.app"]'
+    serving.knative.dev/creator: mc001126174@techmahindra.com
+    serving.knative.dev/lastModifier: dumpaalaumeshchandra._@techmahindra.com
+  creationTimestamp: '2026-09-09T15:04:16.513659Z'
+  generation: 43
+  labels:
+    cloud.googleapis.com/location: asia-south1
+    run.googleapis.com/satisfiesPzs: 'true'
+  name: ingenii-annotate
+  namespace: '792500770355'
+  resourceVersion: AAZeVqzNugM
+  selfLink: /apis/serving.knative.dev/v1/namespaces/792500770355/services/ingenii-annotate
+  uid: 77be6ae9-2ece-41f7-9317-7e3a08bbecb1
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '100'
+        autoscaling.knative.dev/minScale: '0'
+        run.googleapis.com/client-name: gcloud
+        run.googleapis.com/client-version: 564.0.0
+        run.googleapis.com/cpu-throttling: 'true'
+        run.googleapis.com/sessionAffinity: 'false'
+        run.googleapis.com/startup-cpu-boost: 'true'
+      labels:
+        client.knative.dev/nonce: kujgdpdsgu
+        run.googleapis.com/startupProbeType: Default
+    spec:
+      containerConcurrency: 80
+      containers:
+      - env:
+        - name: DATABASE_PROVIDER
+          value: firestore
+        - name: FIREBASE_DATABASE_ID
+          value: engenii-annotate-native
+        - name: FIREBASE_DATABASE_UID
+          value: 54541eac-dd3f-4fd8-b03d-26c237018cb5
+        - name: FIREBASE_LOCATION
+          value: asia-south1
+        - name: FIREBASE_PROJECT_ID
+          value: prod-y-in2300452
+        - name: ALLOW_MEMORY_DB_FALLBACK
+          value: 'false'
+        - name: GOOGLE_CLOUD_PROJECT
+          value: prod-y-in2300452
+        - name: SKIP_MODEL_LOAD
+          value: 'true'
+        - name: STORAGE_PROVIDER
+          value: local
+        - name: HOST
+          value: 0.0.0.0
+        - name: LOG_FORMAT
+          value: json
+        - name: LOG_LEVEL
+          value: INFO
+        - name: AGENT_ENABLED
+          value: 'false'
+        - name: EMBEDDING_ENABLED
+          value: 'false'
+        - name: DINO_ENABLED
+          value: 'false'
+        - name: FLORENCE_ENABLED
+          value: 'false'
+        - name: SAM2_ENABLED
+          value: 'false'
+        image: asia-south1-docker.pkg.dev/prod-y-in2300452/cloud-run-source-deploy/ingenii-annotate@sha256:a8039380e358bdd72fbfad9e08b1641ab3bcd1abcac71291267f5e03194e5478
+        ports:
+        - containerPort: 8080
+          name: http1
+        resources:
+          limits:
+            cpu: '1'
+            memory: 1Gi
+        startupProbe:
+          failureThreshold: 1
+          periodSeconds: 240
+          tcpSocket:
+            port: 8080
+          timeoutSeconds: 240
+      serviceAccountName: dbo-ingenii@prod-y-in2300452.iam.gserviceaccount.com
+      timeoutSeconds: 300
+  traffic:
+  - latestRevision: true
+    percent: 100
+  - revisionName: ingenii-annotate-00003-hox
+    tag: prefixfix
+  - revisionName: ingenii-annotate-00005-vid
+    tag: workspace
+status:
+  address:
+    url: https://ingenii-annotate-mmisgdrdaq-el.a.run.app
+  conditions:
+  - lastTransitionTime: '2026-10-21T09:50:19.625987Z'
+    status: 'True'
+    type: Ready
+  - lastTransitionTime: '2026-10-21T09:50:03.918192Z'
+    status: 'True'
+    type: ConfigurationsReady
+  - lastTransitionTime: '2026-10-21T09:50:19.590236Z'
+    status: 'True'
+    type: RoutesReady
+  latestCreatedRevisionName: ingenii-annotate-00039-prd
+  latestReadyRevisionName: ingenii-annotate-00039-prd
+  observedGeneration: 43
+  traffic:
+  - revisionName: ingenii-annotate-00003-hox
+    tag: prefixfix
+    url: https://prefixfix---ingenii-annotate-mmisgdrdaq-el.a.run.app
+  - revisionName: ingenii-annotate-00005-vid
+    tag: workspace
+    url: https://workspace---ingenii-annotate-mmisgdrdaq-el.a.run.app
+  - latestRevision: true
+    percent: 100
+    revisionName: ingenii-annotate-00039-prd
+  url: https://ingenii-annotate-mmisgdrdaq-el.a.run.app

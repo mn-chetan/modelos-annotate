@@ -1,0 +1,8 @@
+{
+  "name": "Remix Remix  AiForge Annotate.",
+  "description": "Intake, management, and interactive image and text annotation platform for AI data labeling, sentiment analysis, NER, and QA review.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

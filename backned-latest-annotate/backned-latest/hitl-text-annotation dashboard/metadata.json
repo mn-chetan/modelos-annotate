@@ -1,0 +1,6 @@
+{
+  "name": "HITL Text Annotation & Model Alignment Studio",
+  "description": "Enterprise dashboard for AI + Human-in-the-Loop text annotation pipelines, confidence calibration, triage routing, annotator safeguard audits, and active learning queues.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

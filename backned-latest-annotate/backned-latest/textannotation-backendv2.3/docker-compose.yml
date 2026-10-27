@@ -1,0 +1,11 @@
+services:
+  # The unified backend owns both image and text annotation persistence.
+  # It connects to the existing named Firestore database configured in ../.env.
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    env_file:
+      - ../.env
+    ports:
+      - "8000:8000"

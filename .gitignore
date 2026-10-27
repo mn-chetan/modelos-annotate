@@ -1,0 +1,21 @@
+# Dependencies and builds
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Secrets (keep examples)
+.env
+.env.*
+!.env.example
+!env.example
+
+# Model weights and local data
+*.pt
+backend/storage/
+backned-latest-annotate/backned-latest/storage/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/

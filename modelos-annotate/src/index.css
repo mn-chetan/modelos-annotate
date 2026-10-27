@@ -1,0 +1,144 @@
+@import "tailwindcss";
+
+:root {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  /* Official Tech Mahindra Palette */
+  --tm-white: #FFFFFF;
+  --tm-clarity-red: #F8B4A3;
+  --tm-clarity-grey-1: #F6F2EA;
+  --tm-mahindra-red: #E31837;
+  --tm-clarity-grey-2: #E5DFD3;
+  --tm-steel-grey: #4D4D4F;
+  --tm-anchor-grey-1: #4A453D;
+  --tm-impact-red: #5F0229;
+  --tm-anchor-grey-2: #29251D;
+  --tm-blueprint-navy: #0A0838;
+
+  /* Semantic Surfaces */
+  --color-canvas: #F6F2EA;
+  --color-surface: #FFFFFF;
+  --color-surface-subtle: #F6F2EA;
+  --color-surface-raised: #FFFFFF;
+  --color-surface-selected: #F8B4A3;
+  --color-surface-disabled: #E5DFD3;
+
+  /* Semantic Text */
+  --color-text-primary: #29251D;
+  --color-text-secondary: #4D4D4F;
+  --color-text-inverse: #FFFFFF;
+  --color-text-disabled: #4D4D4F;
+  --color-text-link: #E31837;
+
+  /* Semantic Borders */
+  --color-border: #E5DFD3;
+  --color-border-strong: #4A453D;
+
+  /* Semantic Actions */
+  --color-action-primary: #E31837;
+  --color-action-primary-hover: #5F0229;
+  --color-action-primary-text: #FFFFFF;
+  --color-action-disabled: #E5DFD3;
+
+  /* Focus & Brand */
+  --color-focus: #0A0838;
+  --color-brand-strong: #5F0229;
+  --color-brand-deep: #0A0838;
+
+  /* Status */
+  --status-success: #247153;
+  --status-warning: #8A5200;
+  --status-info: #185F8D;
+  --status-error: #9C1936;
+
+  /* Shape Defaults */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Spacing Base */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+}
+
+/* Scoped specifically to the main application shell to ensure the Login page remains untouched */
+#annotate-ai-app {
+  font-family: var(--font-sans);
+  background-color: var(--color-canvas);
+  color: var(--color-text-primary);
+}
+
+#annotate-ai-app button:focus-visible,
+#annotate-ai-app input:focus-visible,
+#annotate-ai-app select:focus-visible,
+#annotate-ai-app textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px var(--color-focus);
+}
+
+/* Data typography - tabular numbers */
+.data-numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+/* TechM Typography Scale Classes */
+.tm-display {
+  font-size: 48px;
+  line-height: 56px;
+  font-weight: 600;
+}
+
+.tm-h1 {
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 600;
+}
+
+.tm-h2 {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+}
+
+.tm-h3 {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+}
+
+.tm-body {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+}
+
+.tm-body-sm {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+.tm-label {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+.tm-caption {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+
+.tm-metric {
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}

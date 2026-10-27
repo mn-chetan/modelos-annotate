@@ -12,7 +12,6 @@ dist/
 # Model weights and local data
 *.pt
 backend/storage/
-backned-latest-annotate/backned-latest/storage/
 
 # Python
 __pycache__/

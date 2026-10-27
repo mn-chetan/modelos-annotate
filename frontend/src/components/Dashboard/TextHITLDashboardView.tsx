@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import StandaloneTextHITLDashboard from '../../../../backned-latest-annotate/backned-latest/hitl-text-annotation dashboard/src/App';
-import '../../../../backned-latest-annotate/backned-latest/hitl-text-annotation dashboard/src/index.css';
+import StandaloneTextHITLDashboard from '../../../../backend/hitl-text-annotation dashboard/src/App';
+import '../../../../backend/hitl-text-annotation dashboard/src/index.css';
 import { api, ProjectResponse, TextHITLDashboardResponse } from '../../services/api';
-import type { LiveScorecardMetrics } from '../../../../backned-latest-annotate/backned-latest/hitl-text-annotation dashboard/src/App';
-import type { AnnotationComparisonRow } from '../../../../backned-latest-annotate/backned-latest/hitl-text-annotation dashboard/src/components/TechMAnnotationComparisonChart';
-import type { AreaIdentificationRow } from '../../../../backned-latest-annotate/backned-latest/hitl-text-annotation dashboard/src/components/TechMSectionDetail';
-import type { ProjectOption } from '../../../../backned-latest-annotate/backned-latest/hitl-text-annotation dashboard/src/types';
+import type { LiveScorecardMetrics } from '../../../../backend/hitl-text-annotation dashboard/src/App';
+import type { AnnotationComparisonRow } from '../../../../backend/hitl-text-annotation dashboard/src/components/TechMAnnotationComparisonChart';
+import type { AreaIdentificationRow } from '../../../../backend/hitl-text-annotation dashboard/src/components/TechMSectionDetail';
+import type { ProjectOption } from '../../../../backend/hitl-text-annotation dashboard/src/types';
 
 interface Props {
   onToggleSidebar?: () => void;

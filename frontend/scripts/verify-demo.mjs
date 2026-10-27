@@ -24,7 +24,7 @@ try{
  await page.getByRole('link',{name:'Upload & run AI'}).click();
  await page.getByRole('button',{name:'Run AI',exact:true}).waitFor();
  await page.getByRole('button',{name:'Run AI',exact:true}).click();log('RUN_AI');
- await page.getByText(/1 images · 1 drafted · 0 approved/).waitFor({timeout:180000});log('ALL_MODELS_FINISHED');
+ await page.locator('.results-counts').filter({hasText:/1\s*image.*1\s*drafted.*0\s*approved/}).waitFor({timeout:180000});log('ALL_MODELS_FINISHED');
  await page.screenshot({path:'.demo/ai-results-desktop.png',fullPage:true});
  await page.getByRole('link',{name:'Open review',exact:true}).click();
  }

@@ -42,7 +42,7 @@ VITE_BACKEND_URL=http://127.0.0.1:8011 npm run dev --prefix frontend
 1. Open workspace → New project. Choose **Image / Object detection**, set classes/colours and the confidence highlight threshold, and stage images.
 2. Create project. Upload failures retain the created project and offer retry for remaining files. The saved project can also be opened to upload images later.
 3. Open **Upload & run AI**. Upload more images if needed, then click **Run AI**. Status, errors, captions, boxes, model confidence and provenance come from persisted results. The three required models must all succeed before results are published.
-4. Open Review. Select an image; draw missing boxes, select/move them, drag corner handles to resize, relabel or delete them, and accept/reject labels. Zoom and Undo/Redo are available. Keys 1–9 select classes; Delete removes a selected box; Ctrl/Cmd-Z and Shift-Ctrl/Cmd-Z undo/redo.
+4. Open Review. Hover or select a box to see its name; the **Names** toggle spaces labels to avoid overlap. The object list supports class search and low-confidence/pending filters. Select an image; draw missing boxes, select/move them, drag corner handles to resize, and relabel, accept/reject or delete them in the selected-object inspector. Zoom and Undo/Redo are available. Keys 1–9 select classes; Delete removes a selected box; Ctrl/Cmd-Z and Shift-Ctrl/Cmd-Z undo/redo.
 5. **Save edits**. Saved edits reopen review and do not approve the image. Failed saves keep the local edits. Navigation asks before discarding unsaved edits.
 6. **Approve image** after every label is decided and saved. Successful empty results also require explicit approval. Human approval is final under `DEMO_QC_BYPASS=true`.
 7. Download **COCO JSON** or **YOLO** from Review or Overview. Only approved images and non-rejected labels are exported. The UI downloads label-only ZIPs; the existing export API can include images with `include_images=true`.
@@ -73,6 +73,12 @@ cd ..
 DEMO_URL=http://127.0.0.1:8011 node frontend/scripts/verify-demo.mjs
 ```
 
+To inspect an existing image detection project without changing data, run:
+
+```bash
+PROJECT_ID=<project-id> DEMO_URL=http://127.0.0.1:8011 node frontend/scripts/verify-image-ui.mjs
+```
+
 For a preinstalled Chromium, set `CHROMIUM_EXECUTABLE` to its executable path. Local screenshots, exports and run logs go in ignored `.demo/`.
 
 Verified in this workspace:
@@ -83,6 +89,8 @@ Verified in this workspace:
 - Real traffic image: 91 merged labels persisted; review edits included relabel, clamp, deletion, manual box and rejection.
 - COCO and YOLO exports contained 90 accepted labels; all classes/coordinates matched reviewed records (YOLO to six-decimal precision).
 - Explicit approval survived backend restart; saving alone produced zero exportable labels.
+- The image UI uses screen-sized HTML labels, consistent class colours, zoom-independent handles, a thumbnail filmstrip and an object inspector. Box names appear on focus by default; enabling Names avoids overlapping tags.
+- Chromium verified label typography, dense-label spacing and square handles at 200% zoom.
 - Chromium completed the live landing-to-approved-export flow, including a simulated 503 save failure, cancelled navigation, zoomed movement/resizing, undo/redo and geometry persistence after reload.
 - Landing, New Project, Overview and Review inspected at 1440px, 720px and 390px, with no page-width overflow or browser JavaScript errors.
 

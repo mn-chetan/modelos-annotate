@@ -1,6 +1,6 @@
 /*
- * One draft, three presentations. Every direction drives the same state so the
- * comparison is about layout and flow, not behaviour.
+ * The new-project draft as state: classes, staged files, rules and readiness. Nothing is
+ * sent anywhere; creating and uploading belong to the API once the shell is wired to it.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {

@@ -1,9 +1,9 @@
 /*
- * The new-project draft: what a project needs before it can be created, shared by all
- * three directions so they differ in composition only. Limits mirror the live client
+ * The new-project draft: what a project needs before it can be created. Limits mirror
+ * the live client
  * (src/services/api.ts uploadAssets, src/types.ts, IntakeForm accept lists).
  */
-import type { Modality } from '../../src/showcase/content';
+import type { Modality } from '../../../showcase/content';
 
 export type { Modality };
 

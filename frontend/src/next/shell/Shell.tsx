@@ -115,9 +115,11 @@ export function Shell({ route, project, children }: { route: Route; project: Pro
             ))}
           </ol>
           <span className="sample-chip">Sample data</span>
-          <a className="btn btn-primary btn-sm" href={href({ id: 'new' })}>
-            <Plus size={15} aria-hidden /> <span>New project</span>
-          </a>
+          {route.id === 'new' ? null : (
+            <a className="btn btn-primary btn-sm" href={href({ id: 'new' })}>
+              <Plus size={15} aria-hidden /> <span>New project</span>
+            </a>
+          )}
         </header>
         <main className="ra-content">{children}</main>
       </div>

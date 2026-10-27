@@ -8,7 +8,7 @@ import { href, navigate, useRoute, type Route } from './router';
 import { useCurrentProject } from './useProject';
 import { Shell } from './shell/Shell';
 import { ProjectsPage } from './pages/Projects';
-import { NewProjectPage } from './pages/NewProject';
+import { NewProjectPage } from './pages/new-project/NewProject';
 import { OverviewPage } from './pages/Overview';
 import { AiResultsPage } from './pages/AiResults';
 import { ReviewPage } from './pages/Review';

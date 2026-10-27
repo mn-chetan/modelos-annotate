@@ -1,8 +1,8 @@
 /*
- * Controls every direction shares: the colour picker, the class editor, the drop target
- * and the staged-file list. Directions compose them; they don't reimplement them.
+ * New project controls: the colour picker, the class editor, the drop target, the staged
+ * file list and the review rules.
  */
-import { useEffect, useId, useLayoutEffect, useRef, useState, type DragEvent, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type DragEvent } from 'react';
 import { AlertCircle, FileText, Film, FolderUp, Image as ImageIcon, Pencil, Plus, Upload, X } from 'lucide-react';
 import { accepts, colourName, fileProblem, formatBytes, inkOn, palette, type LabelClass, type StagedFile } from './model';
 import { filesFromDrop, filesFromInput, type Draft } from './useDraft';
@@ -14,7 +14,6 @@ export function ColourPicker({
   onChange,
   label,
   usedBy,
-  size = 'md',
 }: {
   value: string;
   onChange: (hex: string) => void;
@@ -22,7 +21,6 @@ export function ColourPicker({
   label: string;
   /** Other classes on each colour, so a shared colour is a visible choice. */
   usedBy?: (hex: string) => string[];
-  size?: 'md' | 'lg';
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
@@ -105,7 +103,7 @@ export function ColourPicker({
       <button
         ref={btn}
         type="button"
-        className={`np-swatch np-swatch-${size}`}
+        className="np-swatch"
         style={{ background: value }}
         aria-label={`Colour for ${label}: ${colourName(value)}. Change colour`}
         aria-haspopup="dialog"
@@ -167,12 +165,10 @@ function ClassRow({
   c,
   index,
   draft,
-  onHover,
 }: {
   c: LabelClass;
   index: number;
   draft: Draft;
-  onHover?: (id: string | null) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(c.name);
@@ -210,13 +206,7 @@ function ClassRow({
     draft.classes.filter((o) => o.id !== c.id && o.colour.toLowerCase() === hex.toLowerCase()).map((o) => o.name);
 
   return (
-    <li
-      className="np-class"
-      onPointerEnter={() => onHover?.(c.id)}
-      onPointerLeave={() => onHover?.(null)}
-      onFocus={() => onHover?.(c.id)}
-      onBlur={() => onHover?.(null)}
-    >
+    <li className="np-class">
       <ColourPicker value={c.colour} label={c.name} usedBy={usedBy} onChange={(hex) => draft.recolourClass(c.id, hex)} />
       {editing ? (
         <span className="np-class-edit">
@@ -255,10 +245,12 @@ function ClassRow({
           ref={editBtn}
           type="button"
           className="np-class-name"
+          aria-label={`${c.name}. Rename`}
           onClick={() => {
             setText(c.name);
             setEditing(true);
-          }} aria-label={`${c.name}. Rename`}>
+          }}
+        >
           <span>{c.name}</span>
           <Pencil size={12} aria-hidden />
         </button>
@@ -273,17 +265,7 @@ function ClassRow({
   );
 }
 
-export function ClassEditor({
-  draft,
-  density = 'rows',
-  onHover,
-  invalid,
-}: {
-  draft: Draft;
-  density?: 'rows' | 'roomy' | 'compact';
-  onHover?: (id: string | null) => void;
-  invalid?: string;
-}) {
+export function ClassEditor({ draft, invalid }: { draft: Draft; invalid?: string }) {
   const [text, setText] = useState('');
   const [colour, setColour] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -316,11 +298,11 @@ export function ClassEditor({
   const shownError = err ?? invalid;
 
   return (
-    <div className={`np-classes is-${density}`}>
+    <div className="np-classes">
       {draft.classes.length ? (
         <ul className="np-class-list" aria-label="Classes">
           {draft.classes.map((c, i) => (
-            <ClassRow key={c.id} c={c} index={i} draft={draft} onHover={onHover} />
+            <ClassRow key={c.id} c={c} index={i} draft={draft} />
           ))}
         </ul>
       ) : (
@@ -392,7 +374,7 @@ export function ClassEditor({
 
 /* ---------- Files: drop target, pickers, list ---------- */
 
-export function useDropTarget(onFiles: (f: { file: File; path: string }[]) => void) {
+function useDropTarget(onFiles: (f: { file: File; path: string }[]) => void) {
   const [over, setOver] = useState(false);
   const depth = useRef(0);
   const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer.types).includes('Files');
@@ -425,7 +407,7 @@ export function useDropTarget(onFiles: (f: { file: File; path: string }[]) => vo
   };
 }
 
-export function FilePickers({ draft, primary = false }: { draft: Draft; primary?: boolean }) {
+function FilePickers({ draft }: { draft: Draft }) {
   const filesIn = useRef<HTMLInputElement>(null);
   const folderIn = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -437,7 +419,7 @@ export function FilePickers({ draft, primary = false }: { draft: Draft; primary?
   };
   return (
     <span className="np-pickers">
-      <button type="button" className={`btn btn-sm ${primary ? 'btn-primary' : 'btn-ghost'}`} onClick={() => filesIn.current?.click()}>
+      <button type="button" className="btn btn-ghost btn-sm" onClick={() => filesIn.current?.click()}>
         <Upload size={15} aria-hidden /> Choose files
       </button>
       <button type="button" className="btn btn-ghost btn-sm" onClick={() => folderIn.current?.click()}>
@@ -449,22 +431,18 @@ export function FilePickers({ draft, primary = false }: { draft: Draft; primary?
   );
 }
 
-export function acceptLine(draft: Draft) {
+function acceptLine(draft: Draft) {
   return `${accepts[draft.modality].map((e) => e.slice(1).toUpperCase()).join(', ')} · up to 24 MB each`;
 }
 
-export function DropZone({ draft, children, className = '' }: { draft: Draft; children?: ReactNode; className?: string }) {
+export function DropZone({ draft }: { draft: Draft }) {
   const { over, props } = useDropTarget(draft.addFiles);
   return (
-    <div className={`np-drop ${className}${over ? ' is-over' : ''}`} {...props}>
-      {children ?? (
-        <>
-          <Upload size={20} aria-hidden className="np-drop-icon" />
-          <p className="np-drop-title">Drop {draft.modality === 'image' ? 'images' : draft.modality === 'text' ? 'documents' : 'clips'} or a folder here</p>
-          <p className="np-drop-sub">{acceptLine(draft)}</p>
-          <FilePickers draft={draft} />
-        </>
-      )}
+    <div className={`np-drop${over ? ' is-over' : ''}`} {...props}>
+      <Upload size={20} aria-hidden className="np-drop-icon" />
+      <p className="np-drop-title">Drop {draft.modality === 'image' ? 'images' : draft.modality === 'text' ? 'documents' : 'clips'} or a folder here</p>
+      <p className="np-drop-sub">{acceptLine(draft)}</p>
+      <FilePickers draft={draft} />
     </div>
   );
 }
@@ -497,7 +475,7 @@ export function FileSummary({ draft }: { draft: Draft }) {
 
 const PAGE = 48;
 
-export function FileList({ draft, layout = 'rows' }: { draft: Draft; layout?: 'rows' | 'grid' }) {
+export function FileList({ draft }: { draft: Draft }) {
   const [limit, setLimit] = useState(PAGE);
   if (!draft.files.length) return null;
   // Problems first, so nothing that won't upload hides below the fold.
@@ -508,9 +486,9 @@ export function FileList({ draft, layout = 'rows' }: { draft: Draft; layout?: 'r
   const Icon = kindIcon[draft.modality];
   return (
     <div className="np-files">
-      <ul className={`np-file-${layout}`} aria-label="Files to upload">
+      <ul className="np-file-rows" aria-label="Files to upload">
         {shown.map((f) => (
-          <FileItem key={f.id} f={f} draft={draft} layout={layout} Icon={Icon} />
+          <FileItem key={f.id} f={f} draft={draft} Icon={Icon} />
         ))}
       </ul>
       {sorted.length > limit ? (
@@ -522,24 +500,10 @@ export function FileList({ draft, layout = 'rows' }: { draft: Draft; layout?: 'r
   );
 }
 
-function FileItem({ f, draft, layout, Icon }: { f: StagedFile; draft: Draft; layout: 'rows' | 'grid'; Icon: typeof ImageIcon }) {
+function FileItem({ f, draft, Icon }: { f: StagedFile; draft: Draft; Icon: typeof ImageIcon }) {
   const problem = fileProblem(f.file, draft.modality);
   const [broken, setBroken] = useState(false);
   const thumb = f.thumb && !problem && !broken ? <img src={f.thumb} alt="" loading="lazy" onError={() => setBroken(true)} /> : null;
-  const remove = (
-    <button type="button" className="np-x" aria-label={`Remove ${f.path}`} onClick={() => draft.removeFile(f.id)}>
-      <X size={14} />
-    </button>
-  );
-  if (layout === 'grid') {
-    return (
-      <li className={`np-thumb${problem ? ' is-bad' : ''}`} title={f.path}>
-        {thumb ?? <Icon size={22} aria-hidden />}
-        <span className="np-thumb-name">{problem ?? f.file.name}</span>
-        {remove}
-      </li>
-    );
-  }
   return (
     <li className={`np-file${problem ? ' is-bad' : ''}`}>
       <span className="np-file-ic">{thumb ?? <Icon size={16} aria-hidden />}</span>
@@ -547,7 +511,9 @@ function FileItem({ f, draft, layout, Icon }: { f: StagedFile; draft: Draft; lay
         {f.path}
       </span>
       {problem ? <span className="np-file-why">{problem}</span> : <span className="np-file-size mono">{formatBytes(f.file.size)}</span>}
-      {remove}
+      <button type="button" className="np-x" aria-label={`Remove ${f.path}`} onClick={() => draft.removeFile(f.id)}>
+        <X size={14} />
+      </button>
     </li>
   );
 }
@@ -590,25 +556,6 @@ export function Rules({ draft }: { draft: Draft }) {
           </output>
         </span>
       </div>
-    </div>
-  );
-}
-
-/* ---------- The outcome of "Create" in an exploration ---------- */
-
-export function CreatedNote({ draft, onClose }: { draft: Draft; onClose: () => void }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => ref.current?.focus(), []);
-  return (
-    <div className="np-created" role="status" tabIndex={-1} ref={ref}>
-      <p>
-        <b>Exploration only, nothing was saved or uploaded.</b> In the product this would create “{draft.name.trim()}” with{' '}
-        {draft.classes.length} {draft.classes.length === 1 ? 'class' : 'classes'}
-        {draft.fileStats.ok ? `, then upload ${draft.fileStats.ok} ${draft.fileStats.ok === 1 ? 'file' : 'files'} (${formatBytes(draft.fileStats.bytes)})` : ''}.
-      </p>
-      <button type="button" className="np-x" aria-label="Dismiss" onClick={onClose}>
-        <X size={14} />
-      </button>
     </div>
   );
 }

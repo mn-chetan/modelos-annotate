@@ -1,17 +1,45 @@
 /*
- * A · Brief. The project is written as a single document: its name is the title, each
- * decision a numbered section. A margin column keeps the brief's consequences and the one
- * action in view. Axis: everything visible at once, read top to bottom.
+ * New project, written as a brief: the name is the document's title and each decision a
+ * numbered section. The margin keeps what the choices mean, and the one action, in view.
  */
-import { useRef, useState } from 'react';
-import { Check, Circle, FileText, Film, Image as ImageIcon } from 'lucide-react';
-import { modalities, tasks, formatBytes } from './model';
-import { AddedNote, ClassChip, ClassEditor, CreatedNote, DropZone, FileList, FileSummary, Rules } from './parts';
-import { useDraft } from './useDraft';
+import { useEffect, useRef, useState } from 'react';
+import { ArrowRight, Check, Circle, FileText, Film, Image as ImageIcon, X } from 'lucide-react';
+import { projects } from '../../../showcase/content';
+import { navigate } from '../../router';
+import { formatBytes, modalities, tasks } from './model';
+import { AddedNote, ClassChip, ClassEditor, DropZone, FileList, FileSummary, Rules } from './controls';
+import { useDraft, type Draft } from './useDraft';
+import './new-project.css';
 
 const icons = { image: ImageIcon, text: FileText, video: Film } as const;
 
-export default function BriefVariant() {
+/** The showcase has no API yet: say plainly what Create would do, and offer a sample like it. */
+function Created({ draft, onClose }: { draft: Draft; onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => ref.current?.focus(), []);
+  const sample =
+    projects.find((p) => p.modality === draft.modality && p.task === draft.task) ?? projects.find((p) => p.modality === draft.modality)!;
+  const { ok, bytes } = draft.fileStats;
+  return (
+    <div className="np-created" role="status" tabIndex={-1} ref={ref}>
+      <div>
+        <p>
+          <b>Showcase only: nothing was saved or uploaded.</b> With the live service this creates “{draft.name.trim()}” with{' '}
+          {draft.classes.length} {draft.classes.length === 1 ? 'class' : 'classes'}
+          {ok ? `, then uploads ${ok} ${ok === 1 ? 'file' : 'files'} (${formatBytes(bytes)})` : ''}.
+        </p>
+        <button type="button" className="np-link" onClick={() => navigate({ id: 'project', projectId: sample.id, tab: 'overview' })}>
+          Open a sample {sample.task.toLowerCase()} project <ArrowRight size={13} aria-hidden />
+        </button>
+      </div>
+      <button type="button" className="np-x" aria-label="Dismiss" onClick={onClose}>
+        <X size={14} />
+      </button>
+    </div>
+  );
+}
+
+export function NewProjectPage() {
   const d = useDraft();
   const nameRef = useRef<HTMLInputElement>(null);
   const classesRef = useRef<HTMLDivElement>(null);
@@ -116,7 +144,7 @@ export default function BriefVariant() {
               <p>They upload once the project is created. You can add more later.</p>
             </div>
             <div className="npa-body">
-              <DropZone draft={d} className="npa-drop" />
+              <DropZone draft={d} />
               <FileSummary draft={d} />
               <FileList draft={d} />
               <AddedNote draft={d} />
@@ -200,7 +228,7 @@ export default function BriefVariant() {
             <button type="button" className="btn btn-accent npa-create" onClick={create}>
               Create project
             </button>
-            {created ? <CreatedNote draft={d} onClose={() => setCreated(false)} /> : null}
+            {created ? <Created draft={d} onClose={() => setCreated(false)} /> : null}
           </div>
         </aside>
       </div>

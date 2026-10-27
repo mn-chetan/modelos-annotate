@@ -184,6 +184,7 @@ def _annotation_out(row: Any) -> dict[str, Any]:
         "polygon": raw_poly,
         "mask_id": doc.get("mask_id") or prov.get("mask_id"),
         "version": doc.get("version", 1),
+        "review_status": doc.get("review_status"),
         "created_at": created_at,
         "updated_at": updated_at,
     }

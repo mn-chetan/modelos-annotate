@@ -403,6 +403,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     if not frontend_dir:
         candidates = [
             Path("/app/frontend_dist"),
+            Path(__file__).resolve().parents[2] / "frontend" / "dist",
             Path(__file__).resolve().parent.parent / "frontend_dist",
             Path(__file__).resolve().parent.parent.parent.parent / "Annotate-ui" / "Annotate-ui" / "dist",
         ]

@@ -14,9 +14,9 @@ import { AiResultsPage } from './pages/AiResults';
 import { ReviewPage } from './pages/Review';
 import { QualityPage } from './pages/Quality';
 import { AdminPage } from './pages/Admin';
-import type { Project } from '../showcase/content';
+import { refreshProjects, useProjects, type LiveProject } from './store';
 
-function page(route: Route, project: Project) {
+function page(route: Route, project: LiveProject | undefined) {
   switch (route.id) {
     case 'projects':
       return <ProjectsPage />;
@@ -25,6 +25,7 @@ function page(route: Route, project: Project) {
     case 'admin':
       return <AdminPage />;
     case 'project':
+      if (!project) return <div className="card empty"><h1>Project not found</h1><a href={href({ id: 'projects' })}>All projects</a></div>;
       switch (route.tab) {
         case 'overview':
           return <OverviewPage project={project} />;
@@ -41,24 +42,21 @@ function page(route: Route, project: Project) {
 function App() {
   const route = useRoute();
   const project = useCurrentProject(route);
-  const unknownProject = route.id === 'project' && route.projectId !== project.id;
-
-  useEffect(() => {
-    if (unknownProject) navigate({ id: 'projects' });
-  }, [unknownProject]);
+  const { projects, loading, error } = useProjects();
+  useEffect(() => { refreshProjects(); }, []);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [route.id, route.id === 'project' ? route.tab : '']);
 
   useEffect(() => {
-    const crumb = route.id === 'project' ? `${project.name}` : 'Projects';
+    const crumb = route.id === 'project' ? `${project?.name || 'Project'}` : route.id === 'new' ? 'New project' : route.id === 'admin' ? 'Administration' : 'Projects';
     document.title = `${crumb} · ModelOS Annotate`;
   }, [route, project]);
 
   return (
     <Shell route={route} project={project}>
-      {page(route, project)}
+      {loading ? <p role="status">Loading projects…</p> : error && !projects.length ? <div role="alert" className="card empty"><h2>Service unavailable</h2><p>{error}</p><button className="btn" onClick={refreshProjects}>Retry</button></div> : <>{error && <p role="alert">{error} <button className="btn" onClick={refreshProjects}>Retry connection</button></p>}{page(route, project)}</>}
     </Shell>
   );
 }

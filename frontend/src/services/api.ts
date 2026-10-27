@@ -136,6 +136,7 @@ export interface ProjectResponse {
   id: string;
   name: string;
   task_type?: string;
+  confidence_threshold?: number;
   description?: string;
   project_type?: string;
   modality?: 'image' | 'video' | 'text' | 'document' | string;
@@ -143,9 +144,11 @@ export interface ProjectResponse {
       classification_analysis_level?: 'document' | 'page' | 'paragraph' | 'sentence';
   status?: string;
   created_at?: string;
+  updated_at?: string;
   item_count?: number;
   annotated_count?: number;
   reviewed_count?: number;
+  approved_count?: number;
   pending_review_count?: number;
   allocated_operators?: number | null;
   average_review_time?: number | null;

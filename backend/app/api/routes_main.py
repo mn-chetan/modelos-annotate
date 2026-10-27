@@ -487,14 +487,14 @@ async def health(
     # Expose the capability state of the optional Vertex agent client
     agent_client = getattr(request.app.state, "agent_client", None)
     if agent_client is not None:
-        agent_available = getattr(agent_client, "available", True)
+        agent_available = settings.agent_enabled and getattr(agent_client, "available", True)
         agent_reason = getattr(agent_client, "reason", None)
         models.append(
             ModelStatusOut(
                 key="vertex_agent",
                 model_id=getattr(agent_client, "model_id", "gemini-3.6-flash"),
                 capabilities=["reasoning", "ontology_proposal"],
-                availability="available" if agent_available else "unavailable",
+                availability=("disabled" if not settings.agent_enabled else "available" if agent_available else "unavailable"),
                 device="cloud",
                 loaded=bool(agent_available),
                 error=agent_reason,
@@ -865,6 +865,20 @@ async def trigger_project_ai_annotation(
     if not project_doc:
         raise NotFoundError("Project", project_id)
     project = MongoDoc(project_doc)
+
+    if settings.demo_image_pipeline:
+        if project.get("modality", "image") != "image" or project.get("task_type") != "object_detection":
+            raise ValidationAppError("This demo supports image object detection only")
+        demo_assets = await session.assets.find({"project_id": project_id}).to_list(length=100000)
+        eligible = [a["id"] for a in demo_assets if a.get("status") in {"uploaded", "failed"}]
+        if not eligible:
+            raise ValidationAppError("No uploaded or failed images to process")
+        batch = await BatchService(session, settings).create(
+            project_id, BatchCreate(asset_ids=eligible),
+            batch_creation_source="explicit_ai_annotation_endpoint",
+            explicit_ai_annotation_trigger=True,
+        )
+        return {"batch_id": batch["id"], "status": batch["status"]}
 
     # 1. Resolve all actual assets for the project from MongoDB
     assets_cursor = session["assets"].find({"project_id": project_id, "status": {"$ne": "deleted"}})
@@ -2727,6 +2741,16 @@ async def review_asset(
     else:
         reviewer_1_decision = act
 
+    if settings.demo_qc_bypass and resolved_status in {"human_approved", "human_modified_approved"}:
+        resolved_status = "final_approved"
+
+    if settings.demo_qc_bypass and resolved_status == "final_approved":
+        if asset.get("status") in {"failed", "processing", "queued"} or asset.get("inference_error"):
+            raise HTTPException(status_code=409, detail="Complete successful inference before approval")
+        label_rows = await session.annotations.find({"asset_id": asset_id}).to_list(length=100000)
+        if any(str(a.get("review_status") or "pending").lower() not in {"approved", "edited", "rejected"} for a in label_rows):
+            raise HTTPException(status_code=409, detail="Review and save every label before approving the image")
+
     asset.review_status = resolved_status
     asset.review_reason = review_reason
 
@@ -3079,6 +3103,7 @@ async def update_review_note(
 @router.post("/projects/{project_id}/batches", response_model=BatchOut, status_code=201)
 @router.post("/projects/{project_id}/batches/", response_model=BatchOut, status_code=201, include_in_schema=False)
 async def create_batch(
+    request: Request,
     project_id: str,
     payload: BatchCreate,
     session: AsyncIOMotorDatabase = Depends(deps.get_db),
@@ -4205,6 +4230,11 @@ async def batch_save_asset_annotations(
     asset = await session.assets.find_one({"id": asset_id})
     if not asset:
         raise HTTPException(status_code=404, detail=f"Asset {asset_id} not found")
+    project_doc = await session.projects.find_one({"id": asset["project_id"]})
+    if (project_doc or {}).get("modality", "image") == "image":
+        from app.services.box_review import save_boxes
+        return await save_boxes(session, asset, payload.annotations)
+
     project_id = str(asset.get("project_id", ""))
 
     now = datetime.now(UTC)

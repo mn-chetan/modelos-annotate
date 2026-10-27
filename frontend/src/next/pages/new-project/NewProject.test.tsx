@@ -1,0 +1,31 @@
+import { afterEach, beforeEach, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { NewProjectPage } from './NewProject';
+const calls=vi.hoisted(()=>({create:vi.fn(),upload:vi.fn(),navigate:vi.fn()}));
+vi.mock('../../../services/api',()=>({api:{uploadAssets:(...args:any[])=>calls.upload(...args)}}));
+vi.mock('../../store',()=>({request:(...args:any[])=>calls.create(...args),refreshProjects:vi.fn(async()=>{})}));
+vi.mock('../../router',()=>({navigate:(...args:any[])=>calls.navigate(...args)}));
+beforeEach(()=>{
+  calls.create.mockResolvedValue({id:'created-project'});
+  let failed=false;
+  calls.upload.mockImplementation(async (_id,files)=>{if(files[0].name==='second.jpg'&&!failed){failed=true;throw new Error('Upload disconnected');}return [];});
+  URL.createObjectURL=vi.fn(()=>'/preview');URL.revokeObjectURL=vi.fn();
+});
+afterEach(()=>{cleanup();vi.clearAllMocks();});
+it('retries only remaining uploads and preserves the single created project and ontology',async()=>{
+  const {container}=render(<NewProjectPage/>);
+  fireEvent.change(screen.getByLabelText('Project name'),{target:{value:'Traffic review'}});
+  const files=[new File(['a'],'first.jpg',{type:'image/jpeg'}),new File(['b'],'second.jpg',{type:'image/jpeg'})];
+  fireEvent.change(container.querySelector('input[type="file"]')!,{target:{files}});
+  fireEvent.click(screen.getByRole('button',{name:'Create project'}));
+  await screen.findByRole('alert');
+  expect(screen.getByRole('button',{name:'Open saved project'})).toBeTruthy();
+  expect(calls.create).toHaveBeenCalledTimes(1);
+  const payload=JSON.parse(calls.create.mock.calls[0][1].body);
+  expect(payload.confidence_threshold).toBe(.7);
+  expect(payload.label_ontology[0]).toMatchObject({name:'car',color:'#2A78D6'});
+  fireEvent.click(screen.getByRole('button',{name:'Retry remaining uploads'}));
+  await waitFor(()=>expect(calls.navigate).toHaveBeenCalledWith({id:'project',projectId:'created-project',tab:'overview'}));
+  expect(calls.create).toHaveBeenCalledTimes(1);
+  expect(calls.upload.mock.calls.map(c=>c[1][0].name)).toEqual(['first.jpg','second.jpg','second.jpg']);
+});

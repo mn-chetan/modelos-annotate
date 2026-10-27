@@ -4,7 +4,7 @@ from collections.abc import Iterable
 
 PENDING_REVIEW_STATUSES = {"pending", "review", "human_review", "needs_review", "unassigned"}
 AUTO_APPROVED_STATUSES = {"auto_approved", "high_confidence_auto_pass"}
-HUMAN_APPROVED_STATUSES = {"human_approved", "human_modified_approved", "approved"}
+HUMAN_APPROVED_STATUSES = {"final_approved", "human_approved", "human_modified_approved", "approved"}
 REJECTED_STATUSES = {"human_rejected", "rejected", "flagged"}
 REWORK_STATUSES = {"reprocess_required", "human_rework_required", "rework", "needs_rework"}
 

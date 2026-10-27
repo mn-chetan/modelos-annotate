@@ -126,6 +126,8 @@ class ProjectOut(BaseModel):
     classification_analysis_level: Literal["document", "page", "paragraph", "sentence"] = "document"
     annotation_guidelines: str = ""
     asset_count: int = 0
+    annotated_count: int = 0
+    approved_count: int = 0
     reviewed_count: int = 0
     pending_review_count: int = 0
     auto_approved_count: int = 0
@@ -334,6 +336,9 @@ class AssetOut(BaseModel):
     source_generation: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
+    caption: str | None = None
+    inference_error: str | None = None
+    ai_completed_at: datetime | None = None
     decode_error: str | None = None
     relevance_status: str = "pending"
     relevance_reason: str = ""

@@ -206,6 +206,9 @@ def _asset_out(
         "status": doc.get("status", AssetStatus.UPLOADED.value),
         "review_status": doc.get("review_status", ReviewStatus.PENDING.value),
         "review_reason": doc.get("review_reason", ""),
+        "caption": doc.get("caption"),
+        "inference_error": doc.get("inference_error"),
+        "ai_completed_at": doc.get("ai_completed_at"),
         "workflow_status": doc.get("workflow_status") or (
             "FINAL_APPROVED" if str(doc.get("review_status") or "").lower() in ("final_approved", "approved") or doc.get("is_locked")
             else "QC_PENDING" if str(doc.get("review_status") or "").lower() in ("submitted_for_qc", "quality_audit_required", "high_confidence_qc_sample")
@@ -566,6 +569,7 @@ class ProjectService:
             "annotated_count": len(annotated_asset_ids),
             "allocated_operators": len(assigned_operator_ids) if assigned_operator_ids else None,
             "average_review_time": average_review_time,
+            "approved_count": sum(str(a.get("review_status") or "").lower() in {"final_approved", "approved", "auto_approved", "human_approved", "human_modified_approved"} for a in assets),
             "reviewed_count": reviewed_count,
             "pending_review_count": pending_review_count,
             "auto_approved_count": auto_approved_count,
@@ -603,6 +607,7 @@ class ProjectService:
         asset_ids = {str(a.get("id") or a.get("_id")) for a in project_assets}
         project_annotations = [a for a in annotations if str(a.get("asset_id")) in asset_ids]
         counts = summarize_review_statuses([a.get("review_status") or a.get("status") for a in project_assets])
+        annotated_ids = {str(ann.get("asset_id")) for ann in project_annotations}
         confidences = [float(a["confidence"]) for a in project_annotations if a.get("confidence") is not None]
         label_usage: dict[str, int] = {}
         for ann in project_annotations:
@@ -622,6 +627,8 @@ class ProjectService:
             "annotation_guidelines": str(project.get("annotation_guidelines", "")), "sentiment_analysis_level": project.get("sentiment_analysis_level", "document"), "classification_analysis_level": project.get("classification_analysis_level", "document"), "status": status, "state_label": state,
             "next_action": "Complete ontology setup" if state == "Draft" else ("Review pending detections" if pending else "Export dataset"),
             "modality": _canonical_project_modality(project), "video_config": project.get("video_config"), "asset_count": len(project_assets),
+            "annotated_count": sum(bool(a.get("ai_completed_at")) or str(a.get("id")) in annotated_ids for a in project_assets),
+            "approved_count": sum(str(a.get("review_status") or "").lower() in {"final_approved", "approved", "auto_approved", "human_approved", "human_modified_approved"} for a in project_assets),
             "reviewed_count": counts["auto_approved_count"] + counts["human_approved_count"] + counts["rejected_count"], **counts,
             "mean_confidence": sum(confidences) / len(confidences) if confidences else None, "label_usage": label_usage,
             "color_map": project.get("color_map", {}), "created_at": project.get("created_at") or _utcnow(), "updated_at": project.get("updated_at") or _utcnow(),

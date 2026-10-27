@@ -51,9 +51,21 @@ export function navigate(route: Route) {
   location.hash = href(route);
 }
 
+let navigationGuard: (() => boolean) | null = null;
+export const setNavigationGuard = (guard: (() => boolean) | null) => { navigationGuard = guard; };
 const subscribe = (onChange: () => void) => {
-  window.addEventListener('hashchange', onChange);
-  return () => window.removeEventListener('hashchange', onChange);
+  let previous = location.hash;
+  const changed = () => {
+    if (location.hash === previous) return;
+    if (navigationGuard && !navigationGuard()) {
+      history.replaceState(null, '', previous);
+      return;
+    }
+    previous = location.hash;
+    onChange();
+  };
+  window.addEventListener('hashchange', changed);
+  return () => window.removeEventListener('hashchange', changed);
 };
 
 export function useRoute(): Route {

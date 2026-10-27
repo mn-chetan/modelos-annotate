@@ -394,6 +394,10 @@ class ExportService:
                 doc.get("asset_id") in approved_asset_ids
                 or rev_stat in final_approved_statuses
             )
+            # Image boxes are exported only after the parent image is approved.
+            # An individual saved label decision does not approve the image.
+            if str(project.get("modality") or "image") == "image" and doc.get("asset_id") not in approved_asset_ids:
+                continue
             if not is_final_approved:
                 continue
 
@@ -424,7 +428,7 @@ class ExportService:
 
         masks = (
             to_mongo_docs(
-                await self.db.masks.find({"asset_id": {"$in": export_asset_ids}}).to_list(length=100000)
+                await self.db.masks.find({"asset_id": {"$in": list(export_asset_ids)}}).to_list(length=100000)
             )
             if export_asset_ids
             else []

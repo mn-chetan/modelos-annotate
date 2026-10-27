@@ -534,8 +534,8 @@ export function Rules({ draft }: { draft: Draft }) {
     <div className="np-rules">
       <div className="np-rule">
         <label htmlFor="np-thr">
-          Send to review below
-          <small>AI labels under this confidence go to a person first.</small>
+          Highlight confidence below
+          <small>Lower-confidence labels are highlighted; all demo images need human approval.</small>
         </label>
         <span className="np-rule-ctl">
           <input id="np-thr" type="range" min={0.5} max={0.95} step={0.05} value={draft.threshold} onChange={(e) => draft.setThreshold(Number(e.target.value))} />
@@ -547,12 +547,12 @@ export function Rules({ draft }: { draft: Draft }) {
       <div className="np-rule">
         <label htmlFor="np-smp">
           Quality check sample
-          <small>Share of reviewed work audited before export.</small>
+          <small>Unavailable in this demo. Human approval is final.</small>
         </label>
         <span className="np-rule-ctl">
-          <input id="np-smp" type="range" min={5} max={50} step={5} value={draft.sample} onChange={(e) => draft.setSample(Number(e.target.value))} />
+          <input id="np-smp" disabled type="range" min={5} max={50} step={5} value={draft.sample} onChange={(e) => draft.setSample(Number(e.target.value))} />
           <output htmlFor="np-smp" className="mono">
-            {draft.sample}%
+            Bypassed
           </output>
         </span>
       </div>

@@ -11,7 +11,7 @@ import { PROJECT_TABS, WORKSPACE_ITEMS, crumbFor } from '../nav';
 import { ProjectSwitcher } from './ProjectSwitcher';
 import './shell.css';
 
-function RailContents({ route, project, onNavigate }: { route: Route; project: Project; onNavigate?: () => void }) {
+function RailContents({ route, project, onNavigate }: { route: Route; project?: Project; onNavigate?: () => void }) {
   return (
     <>
       <a className="ra-brand" href={href({ id: 'projects' })} aria-label="ModelOS Annotate, all projects" onClick={onNavigate}>
@@ -23,10 +23,10 @@ function RailContents({ route, project, onNavigate }: { route: Route; project: P
         <ul>
           {PROJECT_TABS.map(({ tab, label, icon: Icon, badge }) => {
             const on = route.id === 'project' && route.tab === tab;
-            const n = badge?.(project);
+            const n = project ? badge?.(project) : undefined;
             return (
               <li key={tab}>
-                <a className="ra-link" href={projectHref(project.id, tab)} aria-current={on ? 'page' : undefined} onClick={onNavigate}>
+                <a className="ra-link" href={project ? projectHref(project.id, tab) : href({ id: 'projects' })} aria-current={on ? 'page' : undefined} onClick={onNavigate}>
                   <Icon size={16} strokeWidth={1.7} aria-hidden />
                   <span>{label}</span>
                   {n !== undefined ? (
@@ -56,15 +56,15 @@ function RailContents({ route, project, onNavigate }: { route: Route; project: P
           AR
         </span>
         <div>
-          Anika Rao
-          <small>Project lead</small>
+          Demo workspace
+          <small>Human review</small>
         </div>
       </div>
     </>
   );
 }
 
-export function Shell({ route, project, children }: { route: Route; project: Project; children: ReactNode }) {
+export function Shell({ route, project, children }: { route: Route; project?: Project; children: ReactNode }) {
   const [drawer, setDrawer] = useState(false);
   const menuBtn = useRef<HTMLButtonElement>(null);
   const crumbs = crumbFor(route, project);
@@ -114,7 +114,7 @@ export function Shell({ route, project, children }: { route: Route; project: Pro
               </li>
             ))}
           </ol>
-          <span className="sample-chip">Sample data</span>
+          <a className="sample-chip" href="./">Home</a>
           {route.id === 'new' ? null : (
             <a className="btn btn-primary btn-sm" href={href({ id: 'new' })}>
               <Plus size={15} aria-hidden /> <span>New project</span>

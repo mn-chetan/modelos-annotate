@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { ChevronDown, FileText, Film, Image as ImageIcon, Plus, type LucideIcon } from 'lucide-react';
-import { projects, type Modality, type Project } from '../../showcase/content';
+import { type Modality, type Project } from '../../showcase/content';
 import { href, projectHref, type ProjectTab, type Route } from '../router';
+import { useProjects } from '../store';
 import { modalityLabel } from '../nav';
 
 export const modalityIcon: Record<Modality, LucideIcon> = { image: ImageIcon, text: FileText, video: Film };
@@ -24,10 +25,11 @@ export function ProjectSwitcher({
   route,
   onNavigate,
 }: {
-  project: Project;
+  project?: Project;
   route: Route;
   onNavigate?: () => void;
 }) {
+  const { projects } = useProjects();
   const ref = useRef<HTMLDetailsElement>(null);
   const tab: ProjectTab = route.id === 'project' ? route.tab : 'overview';
 
@@ -55,12 +57,12 @@ export function ProjectSwitcher({
 
   return (
     <details className="pswitch" ref={ref}>
-      <summary className="pswitch-btn" aria-label={`Current project: ${project.name}. Switch project`}>
-        <ProjectMark modality={project.modality} />
+      <summary className="pswitch-btn" aria-label={`Current project: ${project?.name || 'No project'}. Switch project`}>
+        <ProjectMark modality={project?.modality || 'image'} />
         <span className="pswitch-id">
-          <span className="pswitch-name">{project.name}</span>
+          <span className="pswitch-name">{project?.name || 'Select a project'}</span>
           <span className="pswitch-sub">
-            {modalityLabel[project.modality]} · {project.task}
+            {project ? `${modalityLabel[project.modality]} · ${project.task}` : 'Create your first project'}
           </span>
         </span>
         <ChevronDown size={14} className="pswitch-caret" aria-hidden />
@@ -73,7 +75,7 @@ export function ProjectSwitcher({
               <a
                 className="pswitch-item"
                 href={projectHref(p.id, tab)}
-                aria-current={p.id === project.id ? 'true' : undefined}
+                aria-current={p.id === project?.id ? 'true' : undefined}
                 onClick={done}
               >
                 <ProjectMark modality={p.modality} />

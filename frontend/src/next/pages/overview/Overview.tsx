@@ -1,299 +1,52 @@
-/*
- * Overview: how much of the work did the AI do on its own, and how much went to people?
- * Six scorecards follow the pipeline (total, annotated by AI, approved by AI, sent to human
- * review, approved, AI accuracy). Below them: where the approval line sits and whether the
- * AI's confidence can be trusted, AI accuracy by class, the mistakes reviewers fix, the
- * hardest items, and the reviewers.
- *
- * Deliberately left out: anything measured over time, quality-check results and handling
- * time. Items in quality check count as in review. Reports folded into this page.
- */
 import { useEffect, useState } from 'react';
 import { ArrowRight, Download, Link2 } from 'lucide-react';
-import type { Project } from '../../../showcase/content';
+import { getAnnotations, exportLabels, isDrafted, isApproved, needsReview, useAssets, type Annotation, type LiveProject } from '../../store';
 import { projectHref } from '../../router';
-import { projectEyebrow } from '../shared';
-import { AI_LINE, buildOverview, fmt, pctText, routeAt } from './model';
-import {
-  AI_COLOR,
-  APPROVED_COLOR,
-  Calibration,
-  Figure,
-  HBars,
-  Heatmap,
-  Key,
-  REVIEW_COLOR,
-  Routing,
-  SampleView,
-  SeqKey,
-  calibrationTable,
-  routingTable,
-  useLine,
-} from './charts';
-import { ClassTable, HardestItems, PeopleTable } from './tables';
+import { fmt, pct, projectEyebrow } from '../shared';
+import { Figure } from './charts';
 import './overview.css';
 
-const REST = 'var(--rule2)';
-/** A named remainder: visible enough to key with a dot, quieter than any series colour. */
-const NOT_YET = '#B9B2A3';
-const FIX_COLORS = ['#2A57C0', '#D39B0A', '#1F8A5B', '#8D4AA6', '#D2432C'];
-
-type Seg = { value: number; color: string; label: string; key?: string };
-
-/**
- * A scorecard: what it counts, the number, its share of the whole, and a bar. When the bar
- * splits into named parts (segments with a `key`), each part gets a dot and its number
- * underneath, so the split reads without a sentence.
- */
-function Score({ label, value, share, of, segs }: { label: string; value: string; share?: string; of?: string; segs: Seg[] }) {
-  const total = segs.reduce((s, x) => s + x.value, 0) || 1;
-  const keyed = segs.filter((s) => s.key);
-  return (
-    <div className="ov-score">
-      <p className="ov-score-label">{label}</p>
-      <p className="ov-score-value">{value}</p>
-      {share ? (
-        <p className="ov-score-share">
-          <b>{share}</b> {of}
-        </p>
-      ) : null}
-      <span className="ov-score-meter" role="img" aria-label={segs.map((s) => `${s.label} ${fmt(s.value)}`).join(', ')}>
-        {segs.map((s) => (s.value > 0 ? <span key={s.label} style={{ flexGrow: s.value / total, background: s.color }} /> : null))}
-      </span>
-      {keyed.length > 1 ? (
-        <ul className="ov-score-keys">
-          {keyed.map((s) => (
-            <li key={s.label}>
-              <i style={{ background: s.color }} aria-hidden />
-              <b>{fmt(s.value)}</b> {s.key}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </div>
-  );
-}
-
-/** Copy the page link, with a short confirmation announced to screen readers. */
-function useShare() {
-  const [msg, setMsg] = useState('');
+export function OverviewPage({ project: p }: { project: LiveProject }) {
+  const assets = useAssets(p.id);
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState('');
+  const [note, setNote] = useState('');
   useEffect(() => {
-    if (!msg) return;
-    const t = setTimeout(() => setMsg(''), 2400);
-    return () => clearTimeout(t);
-  }, [msg]);
-  const share = async () => {
-    try {
-      await navigator.clipboard.writeText(location.href);
-      setMsg('Link copied');
-    } catch {
-      setMsg('Copy the address bar to share this page');
+    let alive = true; setLoaded(false);
+    if (assets) Promise.all(assets.map(a => getAnnotations(a.id))).then(rows => { if(alive) {setAnnotations(rows.flat());setLoaded(true);} }).catch(e=>{if(alive)setError(String(e));});
+    return () => {alive=false;};
+  }, [p.id, assets]);
+  const total=assets?.length || 0, drafted=assets?.filter(isDrafted).length || 0, approved=assets?.filter(a=>isApproved(a.review_status)).length || 0;
+  const pending=assets?.filter(needsReview).length || 0;
+  const rejected=annotations.filter(a=>a.review_status==='rejected').length;
+  const reviewed=annotations.filter(a=>['approved','rejected','edited'].includes(a.review_status || ''));
+  const aiReviewed=reviewed.filter(a=>a.source==='ai'||!!a.model_id);
+  const unchanged=aiReviewed.filter(a=>a.review_status==='approved' && !a.provenance?.human_edited && a.source==='ai').length;
+  const mixups = new Map<string, number>();
+  for (const a of annotations) {
+    const before = a.provenance?.original_ai_label;
+    if (typeof before === 'string' && before !== a.label) {
+      const key = `${before} → ${a.label}`; mixups.set(key, (mixups.get(key) || 0) + 1);
     }
-  };
-  const note = (
-    <span className={`ov-toast${msg ? ' is-on' : ''}`} role="status" aria-live="polite">
-      {msg}
-    </span>
-  );
-  return { share, note };
-}
-
-export function OverviewPage({ project }: { project: Project }) {
-  const o = buildOverview(project);
-  const t = useLine();
-  const { share, note } = useShare();
-  const r = routeAt(o, t.line);
-  const reviewedSoFar = o.toPeople - o.inReview;
-  const lineText = t.line.toFixed(3).replace(/0$/, '');
-
-  return (
-    <div className="ov">
-      <header className="ov-head">
-        <div>
-          <p className="page-eyebrow">{projectEyebrow(project)}</p>
-          <h1 className="page-title">{project.name}</h1>
-          <p className="page-lede">
-            {o.done
-              ? `All ${fmt(o.assets)} ${o.unit} approved and ready to export.`
-              : `${fmt(o.approved)} of ${fmt(o.assets)} ${o.unit} approved: ${fmt(o.approvedAuto)} by AI, ${fmt(o.approvedHuman)} by reviewers.`}
-          </p>
-        </div>
-        <div className="page-actions">
-          <button className="btn btn-ghost btn-sm" onClick={share}>
-            <Link2 size={15} aria-hidden /> Share
-          </button>
-          <button className="btn btn-ghost btn-sm" onClick={() => window.print()}>
-            <Download size={15} aria-hidden /> Report PDF
-          </button>
-          {o.done ? (
-            <button className="btn btn-primary btn-sm">
-              <Download size={15} aria-hidden /> Export labels
-            </button>
-          ) : (
-            <a className="btn btn-primary btn-sm" href={projectHref(project.id, 'review')}>
-              Open review <ArrowRight size={15} aria-hidden />
-            </a>
-          )}
-        </div>
-        {note}
-      </header>
-
-      <section className="ov-scores" aria-label="Scorecards">
-        <Score
-          label={`Total ${o.unit}`}
-          value={fmt(o.assets)}
-          share={fmt(o.labels)}
-          of={o.labelNoun}
-          segs={[{ value: o.assets, color: 'var(--ink)', label: `Total ${o.unit}` }]}
-        />
-        <Score
-          label="Annotated by AI"
-          value={fmt(o.drafted)}
-          share={pctText(o.drafted / o.assets)}
-          of={`of ${o.unit}`}
-          segs={[
-            { value: o.drafted, color: AI_COLOR, label: 'Annotated by AI', key: 'annotated' },
-            { value: o.queued, color: NOT_YET, label: 'Not annotated yet', key: 'not yet' },
-          ]}
-        />
-        <Score
-          label="Approved by AI"
-          value={fmt(o.autoAccepted)}
-          share={pctText(o.autoAccepted / Math.max(1, o.drafted))}
-          of="of AI annotations"
-          segs={[
-            { value: o.autoAccepted, color: AI_COLOR, label: 'Approved by AI', key: `at ${AI_LINE} or higher` },
-            { value: o.toPeople, color: REVIEW_COLOR, label: 'Sent to human review', key: `below ${AI_LINE}` },
-          ]}
-        />
-        <Score
-          label="Sent to human review"
-          value={fmt(o.toPeople)}
-          share={pctText(o.toPeople / Math.max(1, o.drafted))}
-          of="of AI annotations"
-          segs={[
-            { value: reviewedSoFar, color: APPROVED_COLOR, label: 'Approved by reviewers', key: 'approved' },
-            { value: o.inReview, color: REVIEW_COLOR, label: 'In human review', key: 'in review' },
-          ]}
-        />
-        <Score
-          label="Approved"
-          value={fmt(o.approved)}
-          share={pctText(o.approved / o.assets)}
-          of={`of ${o.unit}`}
-          segs={[
-            { value: o.approvedAuto, color: AI_COLOR, label: 'Approved by AI', key: 'by AI' },
-            { value: o.approvedHuman, color: APPROVED_COLOR, label: 'Approved by reviewers', key: 'by reviewers' },
-            { value: o.remaining, color: REST, label: 'Not approved yet' },
-          ]}
-        />
-        <Score
-          label="AI accuracy"
-          value={pctText(o.kept, 1)}
-          share={fmt(o.labelsReviewed)}
-          of={`${o.labelNoun} reviewed`}
-          segs={[
-            { value: o.labelsReviewed - o.corrections, color: 'var(--ink2)', label: 'Kept unchanged', key: 'kept' },
-            { value: o.corrections, color: NOT_YET, label: 'Corrected by reviewers', key: 'corrected' },
-          ]}
-        />
-      </section>
-
-      <section className="ov-row is-1-1">
-        <Figure
-          title="AI approval threshold"
-          sub={`At ${lineText}, the AI approves ${pctText(1 - r.share)} and sends ${pctText(r.share)} to human review · about ${fmt(r.missed)} AI mistakes would be approved unseen`}
-          legend={
-            <>
-              <Key color={AI_COLOR}>Approved by AI</Key>
-              <Key color={REVIEW_COLOR}>Sent to human review</Key>
-            </>
-          }
-          table={routingTable(o, t.line)}
-        >
-          <Routing o={o} t={t} />
-        </Figure>
-        <Figure
-          title="Can we trust the AI’s confidence?"
-          sub="When the AI says it is 90% sure, is it right nine times in ten? Bars below the line mean it is overconfident."
-          legend={
-            <>
-              <Key color={AI_COLOR}>Approved by AI</Key>
-              <Key color={REVIEW_COLOR}>Sent to human review</Key>
-              <Key color="var(--ink)" kind="line">
-                Perfectly calibrated
-              </Key>
-            </>
-          }
-          table={calibrationTable(o)}
-        >
-          <Calibration o={o} line={t.line} />
-        </Figure>
-      </section>
-
-      <section className="ov-row is-1">
-        <Figure title="AI accuracy by class" sub="Where the AI is right, and where reviewers correct it">
-          <ClassTable o={o} />
-        </Figure>
-      </section>
-
-      <section className="ov-row is-1-1">
-        <Figure title="Most common mix-ups" sub="What the AI called it, and what reviewers changed it to. Watch for these first.">
-          <HBars
-            labelW={210}
-            rows={o.mixups.map((m) => ({
-              key: `${m.from} → ${m.to}`,
-              value: m.n,
-              color: '#2F52B4',
-              note: `AI said ${m.from}; reviewers changed it to ${m.to}`,
-              label: (
-                <span className="ov-pair">
-                  {o.classes[m.toIndex].sample.kind === 'crop' ? <SampleView sample={o.classes[m.toIndex].sample} /> : null}
-                  <span>
-                    {m.from} <span className="muted">→</span> {m.to}
-                  </span>
-                </span>
-              ),
-            }))}
-          />
-        </Figure>
-        <Figure title="What kind of fixes reviewers make" sub={`${fmt(o.corrections)} corrections, by kind`}>
-          <HBars
-            labelW={170}
-            rows={o.fixes.map((f, i) => ({
-              key: f.name,
-              value: f.n,
-              color: FIX_COLORS[i % FIX_COLORS.length],
-              note: `${pctText(f.n / Math.max(1, o.corrections))} of corrections`,
-              label: <span>{f.name}</span>,
-            }))}
-          />
-        </Figure>
-      </section>
-
-      <section className="ov-row is-1">
-        <Figure title="Hardest items" sub="The items the AI was least sure of, with the reviewer’s correction where there was one">
-          <HardestItems project={project} />
-        </Figure>
-      </section>
-
-      <section className="ov-row is-1-1">
-        <Figure title="Reviewers" sub="How many each reviewed, and how often they changed the AI’s annotation">
-          <PeopleTable o={o} />
-        </Figure>
-        <Figure title="Who corrects which classes" sub="How often each reviewer changes the AI, class by class" legend={<SeqKey low="Changes less" high="Changes more" />}>
-          <Heatmap
-            rows={o.people.map((p) => p.name)}
-            cols={o.classes.map((c) => c.name)}
-            values={o.byReviewer}
-            rowTitle="Reviewer"
-            colTitle="Class"
-            describe={(ri, ci, v) => `${o.people[ri].name} changes the AI’s ${o.classes[ci].name} on ${pctText(v)}`}
-          />
-        </Figure>
-      </section>
-
-      <p className="ov-sample-note">Sample data. Figures are illustrative and agree with the rest of the app.</p>
-    </div>
-  );
+  }
+  const corrections = annotations.filter(a => a.provenance?.human_edited).length;
+  const hardest = [...(assets || [])].filter(a => a.mean_confidence != null).sort((a,b) => a.mean_confidence! - b.mean_confidence!).slice(0,5);
+  const scores=[['Total '+p.unit,total],['Annotated by AI',drafted],['Waiting for review',pending],['Approved',approved],['Labels',loaded ? annotations.length : '—'],['AI labels kept',aiReviewed.length ? `${pct(unchanged,aiReviewed.length)}%` : '—']];
+  async function download(format: 'coco'|'yolo') {setError('');try {await exportLabels(p.id,format);}catch(e){setError(String(e));}}
+  return <div className="ov">
+    <header className="ov-head"><div><p className="page-eyebrow">{projectEyebrow(p)}</p><h1 className="page-title">{p.name}</h1><p className="page-lede">{assets ? `${approved} of ${total} ${p.unit} approved. Human approval is final in this demo.` : 'Loading persisted project results…'}</p></div>
+      <div className="page-actions"><button className="btn btn-ghost btn-sm" onClick={async()=>{try{await navigator.clipboard.writeText(location.href);setNote('Link copied');}catch{setNote('Copy the address bar to share.');}}}><Link2 size={15}/> Share</button><a className="btn btn-primary" href={projectHref(p.id,'ai')}>Upload & run AI <ArrowRight size={15}/></a><a className="btn" href={projectHref(p.id,'review')}>Open review</a></div>
+    </header>
+    {error&&<p role="alert">{error}</p>}{note&&<p role="status">{note}</p>}
+    <section className="ov-scores" aria-label="Scorecards">{scores.map(([label,value])=><div className="ov-score" key={label}><p className="ov-score-label">{label}</p><p className="ov-score-value">{assets ? value : '—'}</p><p className="ov-score-share">{label==='AI labels kept' ? (aiReviewed.length ? `${aiReviewed.length} explicit AI label decisions; not ground-truth accuracy` : 'No label review evidence yet') : 'Persisted project data'}</p><span className="ov-score-meter"><span style={{flexGrow:1,background:label==='Approved'?'#1f8a5b':'var(--ink)'}} /></span></div>)}</section>
+    <section className="ov-row is-1-1"><Figure title="Review routing"><p>All demo images require human approval. Low confidence is highlighted at {p.raw.confidence_threshold ?? 0.7}.</p><p>{drafted} drafted · {pending} waiting · {approved} approved</p><div className="bar-track"><div className="bar-fill" style={{width:`${pct(approved,total)}%`}} /></div></Figure>
+      <Figure title="Can we trust the AI’s confidence?"><p className="muted">Calibration unavailable. A confidence score is model evidence; accuracy needs reviewed ground truth across enough examples.</p></Figure></section>
+    <section className="ov-row is-1"><Figure title="Labels by class" sub="Counts from saved annotations; rejected labels are excluded from exports."><div className="ov-table-wrap"><table className="table"><thead><tr><th>Class</th><th>Labels</th><th>Reviewed</th><th>Rejected</th></tr></thead><tbody>{p.classes.map(c=><tr key={c}><td>{c}</td><td>{loaded?annotations.filter(a=>a.label===c).length:'—'}</td><td>{loaded?reviewed.filter(a=>a.label===c).length:'—'}</td><td>{loaded?annotations.filter(a=>a.label===c&&a.review_status==='rejected').length:'—'}</td></tr>)}</tbody></table></div></Figure></section>
+    <section className="ov-row is-1-1"><Figure title="Most common mix-ups"><p>Saved changes from the original AI class to the reviewed class.</p>{mixups.size ? <div className="ov-table-wrap"><table className="table"><tbody>{[...mixups].sort((a,b)=>b[1]-a[1]).map(([label,n])=><tr key={label}><td>{label}</td><td>{n}</td></tr>)}</tbody></table></div> : <p className="muted">No saved class corrections yet.</p>}</Figure><Figure title="What kind of fixes reviewers make"><p>{corrections} labels with saved class or geometry corrections.</p><p>{rejected} rejected labels · {reviewed.length} explicit label decisions</p><p className="muted">Deleted labels are excluded from current counts.</p></Figure></section>
+    <section className="ov-row is-1"><Figure title="Hardest items" sub="Lowest recorded mean model confidence. Confidence is not measured accuracy."><div className="ov-table-wrap"><table className="table"><thead><tr><th>Image</th><th>Confidence</th><th>Review</th></tr></thead><tbody>{hardest.length ? hardest.map(a=><tr key={a.id}><td>{a.filename}</td><td>{a.mean_confidence?.toFixed(3)}</td><td>{a.review_status}</td></tr>) : <tr><td colSpan={3}>No model confidence recorded yet.</td></tr>}</tbody></table></div></Figure></section>
+    <section className="ov-row is-1-1"><Figure title="Reviewers"><p className="muted">Reviewer speed and agreement are unavailable until sufficient attributed review evidence exists.</p></Figure><Figure title="Who corrects which classes"><p className="muted">Per-reviewer class comparisons are unavailable in this demo.</p></Figure></section>
+    <section className="card card-pad"><h2 className="h-section">Approved export</h2><p>{approved} approved images. Export includes accepted labels and reviewed geometry.</p><div className="page-actions"><button className="btn" disabled={!approved} onClick={()=>download('coco')}><Download size={15}/> COCO JSON</button><button className="btn" disabled={!approved} onClick={()=>download('yolo')}><Download size={15}/> YOLO</button></div></section>
+    <p className="ov-sample-note">Counts come from persisted assets, labels and explicit review decisions. QC sampling is bypassed in this demo.</p>
+  </div>;
 }

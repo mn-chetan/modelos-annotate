@@ -4,7 +4,8 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Check, Circle, FileText, Film, Image as ImageIcon, X } from 'lucide-react';
-import { projects } from '../../../showcase/content';
+import { api } from '../../../services/api';
+import { request, refreshProjects } from '../../store';
 import { navigate } from '../../router';
 import { formatBytes, modalities, tasks } from './model';
 import { AddedNote, ClassChip, ClassEditor, DropZone, FileList, FileSummary, Rules } from './controls';
@@ -13,47 +14,45 @@ import './new-project.css';
 
 const icons = { image: ImageIcon, text: FileText, video: Film } as const;
 
-/** The showcase has no API yet: say plainly what Create would do, and offer a sample like it. */
-function Created({ draft, onClose }: { draft: Draft; onClose: () => void }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => ref.current?.focus(), []);
-  const sample =
-    projects.find((p) => p.modality === draft.modality && p.task === draft.task) ?? projects.find((p) => p.modality === draft.modality)!;
-  const { ok, bytes } = draft.fileStats;
-  return (
-    <div className="np-created" role="status" tabIndex={-1} ref={ref}>
-      <div>
-        <p>
-          <b>Showcase only: nothing was saved or uploaded.</b> With the live service this creates “{draft.name.trim()}” with{' '}
-          {draft.classes.length} {draft.classes.length === 1 ? 'class' : 'classes'}
-          {ok ? `, then uploads ${ok} ${ok === 1 ? 'file' : 'files'} (${formatBytes(bytes)})` : ''}.
-        </p>
-        <button type="button" className="np-link" onClick={() => navigate({ id: 'project', projectId: sample.id, tab: 'overview' })}>
-          Open a sample {sample.task.toLowerCase()} project <ArrowRight size={13} aria-hidden />
-        </button>
-      </div>
-      <button type="button" className="np-x" aria-label="Dismiss" onClick={onClose}>
-        <X size={14} />
-      </button>
-    </div>
-  );
-}
-
 export function NewProjectPage() {
   const d = useDraft();
   const nameRef = useRef<HTMLInputElement>(null);
   const classesRef = useRef<HTMLDivElement>(null);
-  const [created, setCreated] = useState(false);
+  const [createdId, setCreatedId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const uploaded = useRef(new Set<string>());
   const unit = modalities.find((m) => m.key === d.modality)!.unit;
 
-  const create = () => {
+  const create = async () => {
+    if (busy) return;
     if (!d.ready) {
       d.setShowProblems(true);
       if (d.problems.name) nameRef.current?.focus();
       else classesRef.current?.querySelector<HTMLInputElement>('.np-class-add input')?.focus();
       return;
     }
-    setCreated(true);
+    setBusy(true); setError('');
+    try {
+      let id = createdId;
+      if (!id) {
+        const project = await request<{ id: string }>('/projects', { method: 'POST', body: JSON.stringify({
+          name: d.name.trim(), goal: d.description, modality: 'image', task_type: 'object_detection',
+          labels: d.classes.map(c => c.name), label_ontology: d.classes.map(c => ({ id: c.id, name: c.name, color: c.colour })),
+          confidence_threshold: d.threshold,
+          quality_policy: { confidence_threshold: d.threshold, auto_approve_threshold: d.threshold, notes: 'Demo: human approval is final; QC bypassed.' }
+        }) });
+        id = project.id; setCreatedId(id);
+      }
+      // Upload individually and retain successful IDs so retry never repeats completed uploads.
+      for (const f of d.files) {
+        if (uploaded.current.has(f.id)) continue;
+        await api.uploadAssets(id, [f.file]); uploaded.current.add(f.id);
+      }
+      await refreshProjects();
+      navigate({ id: 'project', projectId: id, tab: 'overview' });
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); await refreshProjects(); }
+    finally { setBusy(false); }
   };
 
   const checks = [
@@ -71,6 +70,7 @@ export function NewProjectPage() {
       <p className="page-eyebrow">Workspace · New project</p>
       <div className="npa-desk">
         <article className="npa-sheet" aria-label="Project brief">
+          <fieldset disabled={busy || !!createdId} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
           <header className="npa-title">
             <label className="np-sr" htmlFor="npa-name">
               Project name
@@ -170,8 +170,10 @@ export function NewProjectPage() {
             </div>
             <div className="npa-body">
               <Rules draft={d} />
+              <p className="muted">Demo: every image requires human approval. QC sampling is bypassed.</p>
             </div>
           </section>
+        </fieldset>
         </article>
 
         <aside className="npa-aside" aria-label="Summary">
@@ -204,12 +206,12 @@ export function NewProjectPage() {
               </li>
               <li>
                 <span>
-                  Below <b className="mono">{d.threshold.toFixed(2)}</b> goes to a person
+                  Confidence below <b className="mono">{d.threshold.toFixed(2)}</b> is highlighted for review
                 </span>
               </li>
               <li>
                 <span>
-                  <b className="mono">{d.sample}%</b> of reviewed work is audited
+                  Human approval is final. QC sampling is unavailable in this demo.
                 </span>
               </li>
               <li>
@@ -225,10 +227,12 @@ export function NewProjectPage() {
                 </li>
               ))}
             </ul>
-            <button type="button" className="btn btn-accent npa-create" onClick={create}>
-              Create project
+            <p className="muted">Image object detection is available. Text, video and other image tasks are outside this demo.</p>
+            <button type="button" disabled={busy || d.modality !== 'image' || d.task !== 'Object detection' || !!d.fileStats.bad} className="btn btn-accent npa-create" onClick={create}>
+              {busy ? 'Saving…' : createdId ? 'Retry remaining uploads' : 'Create project'}
             </button>
-            {created ? <Created draft={d} onClose={() => setCreated(false)} /> : null}
+            {error && <p role="alert">{createdId ? 'Project saved. Retry uploads or open the project. ' : ''}{error}</p>}
+            {createdId && <button className="btn" onClick={() => navigate({ id: 'project', projectId: createdId, tab: 'overview' })}>Open saved project</button>}
           </div>
         </aside>
       </div>

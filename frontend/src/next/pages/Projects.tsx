@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
-import { projects, type Modality } from '../../showcase/content';
+import { type Modality } from '../../showcase/content';
+import { useProjects } from '../store';
 import { navigate, projectHref } from '../router';
 import { modalityLabel } from '../nav';
 import { ProjectMark } from '../shell/ProjectSwitcher';
@@ -9,8 +10,10 @@ import { PageHead, fmt, pct } from './shared';
 type Filter = 'all' | Modality;
 
 export function ProjectsPage() {
+  const { projects } = useProjects();
+  const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
-  const rows = projects.filter((p) => filter === 'all' || p.modality === filter);
+  const rows = projects.filter(p => (filter === 'all' || p.modality === filter) && p.name.toLowerCase().includes(query.toLowerCase()));
 
   return (
     <div className="page">
@@ -29,7 +32,7 @@ export function ProjectsPage() {
         </div>
         <span className="spacer" />
         <span className="search" role="search">
-          <Search size={15} aria-hidden /> Search projects
+          <Search size={15} aria-hidden /> <input aria-label="Search projects" placeholder="Search projects" value={query} onChange={e => setQuery(e.target.value)} />
         </span>
       </div>
       <div className="card table-wrap">
@@ -52,6 +55,7 @@ export function ProjectsPage() {
             </tr>
           </thead>
           <tbody>
+            {!rows.length && <tr><td colSpan={7}>No projects here yet. Create a project to begin.</td></tr>}
             {rows.map((p) => (
               <tr key={p.id} className="row-link" onClick={() => navigate({ id: 'project', projectId: p.id, tab: 'overview' })}>
                 <td>

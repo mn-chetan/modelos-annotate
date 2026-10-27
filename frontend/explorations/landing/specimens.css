@@ -1,0 +1,330 @@
+/* Specimen primitives. Colours sit on photographs, so tags carry their own ground. */
+.spec-frame {
+  --spec-ai: #8DB8FF;
+  --spec-flag: var(--mark-strong);
+  --spec-pass: #74D6A4;
+  --spec-track: #FF9C7A;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-3);
+  background: var(--ink);
+  aspect-ratio: 1376 / 768;
+  isolation: isolate;
+}
+
+.spec-frame > img,
+.spec-pan > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.spec-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.spec-box {
+  position: absolute;
+  border: 1.5px solid var(--spec-ai);
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  transform: scale(0.94);
+  transition:
+    opacity var(--dur-3) var(--ease-out),
+    transform var(--dur-3) var(--ease-out),
+    border-color var(--dur-2) var(--ease-out),
+    background-color var(--dur-2) var(--ease-out);
+}
+
+[data-stage='ai'] .spec-box,
+[data-stage='review'] .spec-box,
+[data-stage='qc'] .spec-box,
+.spec-box.is-track {
+  opacity: 1;
+  transform: none;
+}
+
+.spec-box.is-flag {
+  border-color: var(--spec-flag);
+  border-width: 2px;
+  background: rgba(255, 210, 63, 0.12);
+}
+
+.spec-box.is-pass {
+  border-color: var(--spec-pass);
+}
+
+.spec-box.is-track {
+  border-color: var(--spec-track);
+}
+
+.spec-tag {
+  position: absolute;
+  bottom: calc(100% + 1px);
+  left: -1.5px;
+  display: inline-flex;
+  gap: 4px;
+  align-items: baseline;
+  padding: 2px 5px;
+  border-radius: 2px;
+  font: 500 10px/1.2 var(--mono);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  color: #fff;
+  background: rgba(21, 24, 30, 0.86);
+}
+
+.spec-tag em {
+  font-style: normal;
+  opacity: 0.7;
+}
+
+.spec-tag s {
+  opacity: 0.6;
+}
+
+.is-flag .spec-tag {
+  background: var(--spec-flag);
+  color: var(--ink);
+}
+
+.is-pass .spec-tag {
+  background: #1E5B3E;
+}
+
+.is-track .spec-tag {
+  background: #A33A1E;
+}
+
+.spec-box.is-right .spec-tag {
+  left: auto;
+  right: -1.5px;
+}
+
+.spec-compact .spec-tag {
+  display: none;
+}
+
+/* ---------- PII ---------- */
+.spec-zoom {
+  position: absolute;
+  inset: 0;
+  /* Keeps the bus plate through to the pedestrians' faces in view. */
+  transform: scale(1.45);
+  transform-origin: 96% 92%;
+}
+
+.spec-zoom > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.spec-pii {
+  position: absolute;
+  border: 1.5px dashed var(--spec-flag);
+  border-radius: 2px;
+  transition:
+    background-color var(--dur-3) var(--ease-out),
+    backdrop-filter var(--dur-3) var(--ease-out),
+    border-color var(--dur-3) var(--ease-out);
+}
+
+.spec-pii.is-masked {
+  border-color: transparent;
+  background: rgba(30, 30, 34, 0.62);
+  backdrop-filter: blur(4px) saturate(0.4);
+  -webkit-backdrop-filter: blur(5px) saturate(0.4);
+}
+
+/* ---------- Video ---------- */
+.spec-pan {
+  position: absolute;
+  inset: 0;
+  transform: scale(1.14) translateX(-3%);
+  animation: spec-pan 12s ease-in-out infinite;
+}
+
+[data-playing='false'] .spec-pan,
+[data-playing='false'] .spec-playhead {
+  animation-play-state: paused;
+}
+
+@keyframes spec-pan {
+  0% { transform: scale(1.14) translate(-3%, 1%); }
+  50% { transform: scale(1.2) translate(3%, -1%); }
+  100% { transform: scale(1.14) translate(-3%, 1%); }
+}
+
+.spec-rec {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font: 600 10px/1.2 var(--mono);
+  letter-spacing: 0.08em;
+  color: #fff;
+  background: rgba(21, 24, 30, 0.7);
+}
+
+.spec-rec i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FF5A3C;
+  animation: spec-blink 1.4s steps(2, jump-none) infinite;
+}
+
+@keyframes spec-blink {
+  50% { opacity: 0.2; }
+}
+
+.spec-strip {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  grid-auto-flow: column;
+  gap: 3px;
+  padding: 3px;
+  border-radius: var(--radius-2);
+  background: var(--ink);
+}
+
+.spec-strip-cell {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 3px;
+}
+
+.spec-strip-cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.6);
+  object-position: calc(var(--i) / (var(--n) - 1) * 100%) 60%;
+  display: block;
+  opacity: 0.85;
+}
+
+.spec-strip-cell span {
+  position: absolute;
+  left: 4px;
+  bottom: 3px;
+  font: 500 9px/1 var(--mono);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.spec-playhead {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  left: 0;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(210, 69, 42, 0.25);
+  animation: spec-playhead 12s linear infinite;
+}
+
+@keyframes spec-playhead {
+  from { left: 0; }
+  to { left: calc(100% - 2px); }
+}
+
+/* ---------- Text ---------- */
+.spec-text {
+  margin: 0;
+  line-height: 2;
+}
+
+.spec-ent {
+  --ent: var(--c-acc);
+  white-space: nowrap;
+  color: inherit;
+  background: color-mix(in srgb, var(--ent) 12%, transparent);
+  border-bottom: 2px solid var(--ent);
+  border-radius: 3px 3px 0 0;
+  padding: 1px 3px;
+  transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out);
+}
+
+.spec-ent sup {
+  margin-left: 4px;
+  font: 600 9.5px/1 var(--mono);
+  letter-spacing: 0.04em;
+  color: var(--ent);
+  vertical-align: 0.6em;
+}
+
+.spec-ent.is-flag {
+  background: var(--mark-soft);
+  border-bottom-color: var(--mark-strong);
+  outline: 1.5px solid var(--mark-strong);
+}
+
+.spec-ent.is-flag sup {
+  color: var(--warn-ink);
+}
+
+.spec-ent.is-pass {
+  border-bottom-color: var(--pass);
+}
+
+.spec-dark .spec-ent {
+  --ent-on: color-mix(in srgb, var(--ent) 45%, white);
+  background: color-mix(in srgb, var(--ent) 30%, transparent);
+  border-bottom-color: var(--ent-on);
+}
+
+.spec-dark .spec-ent sup {
+  color: var(--ent-on);
+}
+
+.spec-dark .spec-ent.is-flag {
+  background: rgba(255, 210, 63, 0.18);
+  outline-color: var(--mark-strong);
+}
+
+.spec-dark .spec-ent.is-flag sup {
+  color: var(--mark);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spec-pan,
+  .spec-playhead,
+  .spec-rec i {
+    animation: none;
+  }
+}
+
+/* ---------- Object crop ---------- */
+.spec-crop {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-2);
+  background: var(--ink);
+}
+
+.spec-crop img {
+  position: absolute;
+  max-width: none;
+  object-fit: fill;
+}
+
+.spec-crop-box {
+  position: absolute;
+  border: 2px solid var(--mark-strong);
+  border-radius: 2px;
+}

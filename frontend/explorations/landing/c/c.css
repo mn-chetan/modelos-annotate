@@ -1,0 +1,833 @@
+/* Direction C — Pipeline in motion */
+@property --scan {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 0%;
+}
+
+.c-root {
+  --gutter: clamp(16px, 4vw, 56px);
+  --max: 1200px;
+  --pad: max(var(--gutter), calc((100% - var(--max)) / 2));
+  --bg: #0D0F13;
+  --bg2: #171A20;
+  --line: rgba(255, 255, 255, 0.1);
+  --text: #F3F1EB;
+  --dim: rgba(243, 241, 235, 0.62);
+  --faint-on: rgba(243, 241, 235, 0.38);
+  color-scheme: dark;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: clip;
+}
+
+/* ---------- Nav ---------- */
+.c-nav {
+  position: fixed;
+  top: 14px;
+  left: var(--gutter);
+  right: var(--gutter);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.c-nav > * {
+  pointer-events: auto;
+}
+
+/* The approved logo needs a light ground, so it travels on its own paper chip. */
+.c-brand-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: var(--paper);
+  box-shadow: 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+  text-decoration: none;
+}
+
+.c-nav nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 44px;
+  padding: 4px 4px 4px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(13, 15, 19, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.c-nav nav > a:not(.c-btn) {
+  padding: 0 12px;
+  font-size: 14px;
+  color: var(--dim);
+  text-decoration: none;
+}
+
+.c-nav nav > a:not(.c-btn):hover {
+  color: var(--text);
+}
+
+/* ---------- Buttons ---------- */
+.c-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 50px;
+  padding: 0 24px;
+  border-radius: 999px;
+  font: 600 15px/1 var(--sans);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+
+.c-btn:active {
+  transform: translateY(1px);
+}
+
+.c-btn-light {
+  background: var(--text);
+  color: var(--ink);
+}
+
+.c-btn-light:hover {
+  background: #fff;
+}
+
+.c-btn-sm {
+  height: 34px;
+  padding: 0 16px;
+  font-size: 13.5px;
+}
+
+.c-root :focus-visible {
+  outline-color: #8DB8FF;
+}
+
+/* ---------- Type ---------- */
+.c-eyebrow {
+  margin: 0 0 22px;
+  font: 600 12px/1.2 var(--sans);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.c-display {
+  margin: 0;
+  font: 650 clamp(46px, 8.6vw, 136px) / 0.94 var(--sans);
+  letter-spacing: -0.048em;
+}
+
+.c-display > span {
+  display: block;
+}
+
+.c-display em {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--accent-on-dark);
+}
+
+.c-display-sm {
+  font-size: clamp(42px, 7vw, 112px);
+}
+
+.c-h2 {
+  margin: 0;
+  font: 650 clamp(34px, 4.4vw, 64px) / 1 var(--sans);
+  letter-spacing: -0.035em;
+}
+
+/* ---------- Hero ---------- */
+.c-hero {
+  position: relative;
+  padding-top: clamp(120px, 16vh, 176px);
+  padding-bottom: clamp(48px, 8vh, 96px);
+}
+
+.c-glow {
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  width: min(1100px, 120vw);
+  aspect-ratio: 1.6;
+  transform: translate(-50%, -20%);
+  background:
+    radial-gradient(closest-side, rgba(210, 69, 42, 0.32), transparent 72%),
+    radial-gradient(closest-side at 70% 60%, rgba(42, 87, 192, 0.22), transparent 70%);
+  filter: blur(30px);
+  pointer-events: none;
+}
+
+.c-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse 60% 50% at 50% 30%, #000 10%, transparent 75%);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.c-hero-copy {
+  position: relative;
+  text-align: center;
+  padding-inline: var(--gutter);
+}
+
+.c-hero-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.c-hero-actions p {
+  margin: 0;
+  font-size: clamp(16px, 1.5vw, 19px);
+  color: var(--dim);
+}
+
+.c-stage {
+  position: relative;
+  margin-top: clamp(48px, 7vw, 88px);
+  padding-inline: var(--pad);
+  perspective: 1600px;
+}
+
+.c-tilt {
+  position: relative;
+  transform-origin: 50% 0%;
+  transform-style: preserve-3d;
+}
+
+.c-scan {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  animation: c-scan 7s var(--ease-in-out) infinite;
+}
+
+.c-scan .spec-frame,
+.c-scene .spec-frame,
+.c-panel-spec .spec-frame {
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 50px 120px -40px rgba(0, 0, 0, 0.9);
+}
+
+.c-scan .spec-layer {
+  clip-path: inset(-20px calc(100% - var(--scan)) 0 0);
+}
+
+.c-beam {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--scan);
+  width: 140px;
+  transform: translateX(-100%);
+  border-right: 1.5px solid rgba(141, 184, 255, 0.95);
+  background: linear-gradient(90deg, transparent, rgba(141, 184, 255, 0.22));
+  pointer-events: none;
+  animation: c-beam 7s var(--ease-in-out) infinite;
+}
+
+@keyframes c-scan {
+  0% { --scan: 0%; }
+  50% { --scan: 100%; }
+  100% { --scan: 100%; }
+}
+
+@keyframes c-beam {
+  0%, 48% { opacity: 1; }
+  56%, 100% { opacity: 0; }
+}
+
+.c-float {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(23, 26, 32, 0.94);
+  box-shadow: 0 20px 40px -18px rgba(0, 0, 0, 0.8);
+  font-size: 13.5px;
+  white-space: nowrap;
+  transform: translateZ(60px);
+}
+
+.c-float i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.c-float i.is-ai { background: #8DB8FF; }
+.c-float i.is-flag { background: var(--mark-strong); }
+
+.c-float-a {
+  left: -18px;
+  top: 14%;
+}
+
+.c-float-b {
+  right: -18px;
+  bottom: 12%;
+}
+
+/* ---------- Pinned pipeline ---------- */
+.c-pipe {
+  position: relative;
+}
+
+.c-pipe-pin {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.4fr);
+  align-items: center;
+  gap: clamp(32px, 5vw, 80px);
+  padding-inline: var(--pad);
+}
+
+.c-pipe-text {
+  min-height: calc(2 * clamp(34px, 4.4vw, 64px) + 140px);
+}
+
+.c-pipe-count {
+  margin-bottom: 18px;
+  font: 500 13px/1 var(--mono);
+  color: var(--faint-on);
+}
+
+.c-pipe-count span {
+  color: var(--text);
+}
+
+.c-pipe-line {
+  margin: 18px 0 24px;
+  max-width: 30ch;
+  font-size: clamp(16px, 1.4vw, 19px);
+  line-height: 1.55;
+  color: var(--dim);
+}
+
+.c-actor {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font: 600 12px/1 var(--sans);
+}
+
+.c-actor.is-ai { background: rgba(141, 184, 255, 0.14); color: #8DB8FF; }
+.c-actor.is-reviewer { background: rgba(255, 210, 63, 0.14); color: var(--mark-strong); }
+.c-actor.is-qc { background: rgba(116, 214, 164, 0.14); color: #74D6A4; }
+.c-actor.is-team { background: rgba(255, 255, 255, 0.08); color: var(--dim); }
+
+.c-ticks {
+  list-style: none;
+  margin: 56px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.c-ticks li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--faint-on);
+  transition: color var(--dur-2) var(--ease-out);
+}
+
+.c-ticks li::before {
+  content: '';
+  width: 14px;
+  height: 1px;
+  background: currentColor;
+  transition: width var(--dur-3) var(--ease-out), background-color var(--dur-2);
+}
+
+.c-ticks li.is-done {
+  color: var(--dim);
+}
+
+.c-ticks li.is-on {
+  color: var(--text);
+}
+
+.c-ticks li.is-on::before {
+  width: 32px;
+  background: var(--accent);
+}
+
+.c-pipe-stage {
+  position: relative;
+}
+
+.c-scene {
+  position: relative;
+  aspect-ratio: 1376 / 768;
+}
+
+.c-pipe-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -28px;
+  height: 2px;
+  background: var(--accent);
+  transform-origin: left center;
+}
+
+.c-pipe-stage::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -28px;
+  height: 2px;
+  background: var(--line);
+  z-index: -1;
+}
+
+/* Intake */
+.c-intake {
+  position: relative;
+  height: 100%;
+}
+
+.c-card {
+  position: absolute;
+  top: 8%;
+  width: 40%;
+  aspect-ratio: 4 / 3.3;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg2);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.9);
+}
+
+.c-card img {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.c-card > span {
+  font: 500 11.5px/1 var(--mono);
+  color: var(--dim);
+}
+
+.c-card-img { left: 2%; }
+.c-card-doc { left: 30%; top: 2%; z-index: 2; }
+.c-card-vid { right: 2%; top: 10%; }
+
+.c-card-vid .spec-strip {
+  flex: 1;
+  grid-auto-flow: row;
+  grid-template-columns: 1fr 1fr;
+  align-content: center;
+}
+
+.c-doc-lines {
+  flex: 1;
+  padding: 14px 10px;
+  border-radius: 8px;
+  background: #1F232B;
+}
+
+.c-doc-lines i {
+  display: block;
+  height: 7px;
+  margin-bottom: 11px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.c-classes {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.c-classes li {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(23, 26, 32, 0.9);
+  font: 500 12px/1 var(--mono);
+  color: var(--dim);
+}
+
+/* Review */
+.c-review {
+  position: relative;
+}
+
+.c-cursor {
+  position: absolute;
+  z-index: 5;
+  width: 28px;
+  height: 28px;
+  fill: #fff;
+  stroke: var(--ink);
+  stroke-width: 1.2;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+}
+
+/* QC */
+.c-qc {
+  position: relative;
+}
+
+.c-stamp {
+  position: absolute;
+  right: 7%;
+  top: 10%;
+  display: grid;
+  gap: 4px;
+  padding: 12px 20px;
+  border: 3px solid #74D6A4;
+  border-radius: 12px;
+  background: rgba(13, 15, 19, 0.6);
+  color: #74D6A4;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.c-stamp b {
+  font: 700 clamp(18px, 2.2vw, 30px) / 1 var(--sans);
+  letter-spacing: 0.1em;
+}
+
+.c-stamp span {
+  font: 600 10.5px/1 var(--mono);
+  letter-spacing: 0.14em;
+}
+
+/* Export */
+.c-code {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--code-bg);
+  overflow: hidden;
+  box-shadow: 0 50px 120px -40px rgba(0, 0, 0, 0.9);
+}
+
+.c-code-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 42px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.c-code-bar i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.c-code-bar span {
+  margin-left: 10px;
+  font: 500 12px/1 var(--mono);
+  color: var(--dim);
+}
+
+.c-code pre {
+  margin: 0;
+  padding: clamp(14px, 2.4vw, 28px);
+  overflow: auto;
+  font: 450 clamp(11px, 1.15vw, 15.5px) / 1.75 var(--mono);
+  color: var(--code-ink);
+}
+
+.c-code-line {
+  display: block;
+  white-space: pre;
+}
+
+.c-code-line em {
+  margin-right: 20px;
+  font-style: normal;
+  color: rgba(255, 255, 255, 0.24);
+}
+
+/* Reduced-motion pipeline */
+.c-still {
+  padding: 120px var(--pad) 40px;
+}
+
+.c-still-row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.4fr);
+  gap: 56px;
+  align-items: center;
+  padding-block: 56px;
+  border-top: 1px solid var(--line);
+}
+
+/* ---------- Modalities ---------- */
+.c-mods {
+  position: relative;
+  height: 320vh;
+}
+
+.c-mods-pin {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(28px, 4vh, 48px);
+  overflow: hidden;
+}
+
+.c-mods-title {
+  padding-inline: var(--pad);
+}
+
+.c-mods-track {
+  display: flex;
+  width: 300%;
+}
+
+.c-panel {
+  flex: 0 0 calc(100% / 3);
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
+  grid-template-rows: auto auto 1fr;
+  column-gap: clamp(32px, 4vw, 64px);
+  align-items: start;
+  /* Track is 300% wide, so pad against the viewport, not the containing block. */
+  padding-inline: max(var(--gutter), calc((100vw - var(--max)) / 2));
+}
+
+.c-panel-head {
+  grid-column: 1;
+}
+
+.c-panel-num {
+  display: block;
+  margin-bottom: 10px;
+  font: 500 13px/1 var(--mono);
+  color: var(--accent-on-dark);
+}
+
+.c-panel h3 {
+  margin: 0;
+  font: 650 clamp(44px, 6vw, 96px) / 0.95 var(--sans);
+  letter-spacing: -0.045em;
+}
+
+.c-panel-spec {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  display: grid;
+  gap: 8px;
+}
+
+.c-panel-doc {
+  aspect-ratio: 1376 / 768;
+  display: flex;
+  align-items: center;
+  padding: clamp(20px, 3vw, 44px);
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--bg2);
+  font-family: var(--serif);
+  font-size: clamp(17px, 1.8vw, 24px);
+  line-height: 1.5;
+}
+
+.c-panel p {
+  grid-column: 1;
+  margin: 24px 0 0;
+  max-width: 34ch;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--dim);
+}
+
+.c-panel ul {
+  grid-column: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+}
+
+.c-panel li {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--dim);
+}
+
+.c-mods-still {
+  padding: 120px 0 40px;
+}
+
+.c-mods-grid {
+  display: grid;
+  gap: 88px;
+  margin-top: 56px;
+}
+
+/* ---------- Close and footer ---------- */
+.c-close {
+  display: grid;
+  justify-items: center;
+  gap: 44px;
+  padding: clamp(120px, 18vh, 220px) var(--gutter) clamp(120px, 16vh, 200px);
+  text-align: center;
+}
+
+.c-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 32px var(--pad) 96px;
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ---------- Adaptive composition ---------- */
+@media (max-width: 1080px) {
+  .c-float-a { left: 8px; }
+  .c-float-b { right: 8px; }
+}
+
+@media (max-width: 820px) {
+  .c-nav nav > a:not(.c-btn) {
+    display: none;
+  }
+  .c-nav nav {
+    padding: 4px;
+  }
+  .c-float {
+    display: none;
+  }
+  .c-pipe-pin {
+    grid-template-columns: 1fr;
+    align-content: center;
+    gap: 28px;
+  }
+  .c-ticks {
+    display: none;
+  }
+  .c-pipe-line {
+    margin-bottom: 14px;
+  }
+  .c-still-row,
+  .c-panel {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .c-panel-spec {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .c-panel-doc {
+    aspect-ratio: auto;
+  }
+  .c-card > span {
+    font-size: 9.5px;
+  }
+}
+
+@media (max-width: 560px) {
+  .c-brand-chip {
+    height: 40px;
+    padding: 0 10px;
+  }
+  .c-brand-chip .lockup {
+    --mark-h: 14px;
+  }
+  .c-brand-chip .lockup-product {
+    font-size: 13.5px;
+  }
+  .c-nav nav {
+    height: 40px;
+    padding: 0;
+    border: 0;
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .c-nav .c-btn-sm {
+    height: 40px;
+    padding: 0 14px;
+  }
+  .c-scene .spec-box:not(.is-flag) .spec-tag,
+  .c-scan .spec-tag {
+    display: none;
+  }
+  .c-classes li {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .c-scan,
+  .c-beam {
+    animation: none;
+  }
+  .c-scan {
+    --scan: 100%;
+  }
+  .c-beam {
+    display: none;
+  }
+}

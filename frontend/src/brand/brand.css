@@ -1,78 +1,45 @@
 /*
- * Brand lockup, ported from concept-07 (apps/src/styles/ui.css `.lockup*`).
- * Fallbacks keep it correct where tokens.css is not loaded (the current app shell).
+ * Brand lockup. --mark-h is the height of the logo's content box; the rest follows from
+ * the approved PNG's measured content box (4304×794 at 119,119 inside 4561×1032).
  */
 .lockup {
-  --mark-h: 22px;
-  display: inline-flex;
-  align-items: center;
-  gap: calc(var(--mark-h) * 0.55);
-  color: var(--ink, #15181E);
-  min-width: 0;
-}
-
-.lockup-sm {
-  /* 18px is the smallest mark at which the parent wordmark stays legible. */
-  --mark-h: 18px;
-}
-
-.lockup-lg {
-  --mark-h: 26px;
-}
-
-/* Crop the approved asset to its measured content box (1368×330 inside 1536×804). */
-.lockup-mark {
+  --mark-h: 40px;
   position: relative;
   flex: none;
   display: block;
-  width: calc(var(--mark-h) * 4.145);
+  width: calc(var(--mark-h) * 5.4207);
   height: var(--mark-h);
   overflow: hidden;
+  /* Padding or a border from a call site adds to the box instead of cropping the logo. */
+  box-sizing: content-box;
 }
 
-.lockup-mark img {
+.lockup-sm {
+  --mark-h: 32px;
+}
+
+.lockup-lg {
+  --mark-h: 46px;
+}
+
+/* Spans its container's width, e.g. the rail. */
+.lockup-fill {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4304 / 794;
+}
+
+.lockup.lockup-fill img {
+  width: 105.97%;
+  left: -2.765%;
+  top: -14.987%;
+}
+
+.lockup img {
   position: absolute;
   max-width: none;
-  width: calc(var(--mark-h) * 4.6545);
+  width: calc(var(--mark-h) * 5.7443);
   height: auto;
-  left: calc(var(--mark-h) * -0.2545);
-  top: calc(var(--mark-h) * -0.7212);
-  /* Drops the JPEG's white ground onto light surfaces. Never place on dark. */
-  mix-blend-mode: multiply;
-}
-
-.lockup-rule {
-  flex: none;
-  width: 1px;
-  height: calc(var(--mark-h) * 1.35);
-  background: var(--rule-strong, #CFC9BC);
-}
-
-.lockup-product {
-  font-family: var(--font-display, "Newsreader Variable", "Iowan Old Style", Georgia, serif);
-  font-weight: 600;
-  font-size: calc(var(--mark-h) * 0.86);
-  letter-spacing: -0.01em;
-  line-height: 1;
-  white-space: nowrap;
-  color: var(--ink, #15181E);
-}
-
-.lockup-sm .lockup-product {
-  font-size: 0.9375rem;
-}
-
-.lockup-stacked {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.lockup-stacked .lockup-rule {
-  width: 1.75rem;
-  height: 1px;
-}
-
-.lockup-stacked .lockup-product {
-  font-size: 1.1875rem;
+  left: calc(var(--mark-h) * -0.14987);
+  top: calc(var(--mark-h) * -0.14987);
 }

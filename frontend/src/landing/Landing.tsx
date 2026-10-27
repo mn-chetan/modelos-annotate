@@ -74,7 +74,7 @@ export default function Landing() {
       <div className="a-root">
         <header className="a-top">
           <a href="#top" className="a-brand" aria-label="ModelOS Annotate home">
-            <BrandLockup size="md" />
+            <BrandLockup size="lg" />
           </a>
           <nav className="a-nav" aria-label="Sections">
             <a href="#capabilities">Capabilities</a>
@@ -238,7 +238,7 @@ export default function Landing() {
         </main>
 
         <footer className="a-foot">
-          <BrandLockup size="sm" />
+          <BrandLockup size="md" />
           <span>Image · Text · Video</span>
         </footer>
       </div>

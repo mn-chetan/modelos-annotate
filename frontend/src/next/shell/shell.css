@@ -30,7 +30,7 @@
 
 .ra-brand {
   display: block;
-  padding: 2px 6px 4px;
+  padding: 4px 0 6px;
   text-decoration: none;
   border-radius: 6px;
 }
@@ -275,10 +275,16 @@
   }
   .ra-top-brand {
     display: inline-flex;
+    flex: none;
   }
 }
 
 @media (max-width: 560px) {
+  /* With the crumbs gone, keep the action at the far edge. */
+  .ra-top .btn {
+    margin-left: auto;
+  }
+  .ra-crumbs,
   .ra-top .sample-chip,
   .ra-top .btn span {
     display: none;

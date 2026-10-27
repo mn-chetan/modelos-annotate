@@ -21,7 +21,7 @@
   display: flex;
   align-items: center;
   gap: 32px;
-  height: 64px;
+  height: 76px;
   background: var(--paper-glass);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -558,8 +558,8 @@
 
 @media (max-width: 560px) {
   .a-top { gap: 12px; }
-  .a-top .lockup { --mark-h: 16px; }
-  .a-top .lockup-product { font-size: 15px; }
+  .a-top .lockup { --mark-h: 32px; }
+  .a-top { height: 64px; }
   .a-top .a-btn-sm { padding: 0 14px; }
   .a-figure .spec-box:not(.is-flag) .spec-tag { display: none; }
   .a-ledger-num,

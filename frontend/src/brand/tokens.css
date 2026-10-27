@@ -196,7 +196,7 @@
   --dur-2: 200ms;
   --dur-3: 320ms;
 
-  --rail-w: 252px;
+  --rail-w: 272px;
   --bar-h: 58px;
   --inspector-w: 26rem;
   /* Summary pages stop growing here; workbenches (.page-wide) use the full width. */

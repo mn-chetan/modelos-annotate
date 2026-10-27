@@ -197,7 +197,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       >
         {/* Brand Header */}
         <div className="flex h-20 items-center justify-between px-5 border-b border-[#E2DDD5] bg-white">
-          <BrandLockup size="sm" stacked />
+          <BrandLockup size="md" />
 
           {/* Close button for mobile */}
           <button

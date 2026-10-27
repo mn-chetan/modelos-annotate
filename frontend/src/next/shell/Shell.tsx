@@ -15,7 +15,7 @@ function RailContents({ route, project, onNavigate }: { route: Route; project: P
   return (
     <>
       <a className="ra-brand" href={href({ id: 'projects' })} aria-label="ModelOS Annotate, all projects" onClick={onNavigate}>
-        <BrandLockup stacked />
+        <BrandLockup size="fill" />
       </a>
       <ProjectSwitcher project={project} route={route} onNavigate={onNavigate} />
       <nav className="ra-nav" aria-label="Main">
@@ -105,7 +105,7 @@ export function Shell({ route, project, children }: { route: Route; project: Pro
             <Menu size={18} />
           </button>
           <span className="ra-top-brand">
-            <BrandLockup size="sm" product={false} />
+            <BrandLockup size="sm" />
           </span>
           <ol className="ra-crumbs" aria-label="Breadcrumb">
             {crumbs.map((c, i) => (

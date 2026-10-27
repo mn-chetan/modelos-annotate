@@ -1,0 +1,212 @@
+/*
+ * Copied from agentic-red-teaming@origin/concept-07-takeover:apps/src/styles/tokens.css.
+ * Local changes: font stacks name the bundled @fontsource-variable families first
+ * (Newsreader gives Linux/ChromeOS a real serif). Keep everything else in sync upstream.
+ *
+ * ModelOS design tokens.
+ * Light-first; every surface, text and rule decision goes through a token so a dark
+ * theme is a token change, not a redesign (TechM spec §6.6). Mahindra Red is reserved
+ * for the brand and the single launch action; evidence never uses brand red.
+ * The evidence hues were validated with the dataviz palette validator
+ * (all-pairs CVD ΔE ≥ 19, normal-vision ΔE ≥ 19 on --paper).
+ */
+:root {
+  color-scheme: light;
+
+  /* Concept-07 canonical tokens */
+  --paper: #F6F4EE;
+  --rail: #FBFAF6;
+  --surface: #FFFFFF;
+  --sheet: #FFFEFB;
+  --ink: #15181E;
+  --ink2: #383D48;
+  --muted: #575B64;
+  --faint: #5E626B;
+  --rule: #E5E1D7;
+  --rule2: #EFEBE3;
+  --accent: #D2452A;
+  --accent-soft: #FBE8E2;
+  --mark: #FFE07A;
+  --mark-soft: #FFF4C8;
+  --pass: #2C7A54;
+  --pass-soft: #E3F0E8;
+  --pass-tile: #BFDCCB;
+  --fail: #C23B2A;
+  --fail-soft: #F9E2DD;
+  --warn: #B07416;
+  --warn-soft: #F8EDD8;
+  --blue: #2A57C0;
+  --blue-soft: #E8EEFB;
+  --qual-soft: #F2EAFB;
+
+  /* Text on tinted status fills, and their hairlines */
+  --pass-ink: #1E5B3E;
+  --fail-ink: #9E2218;
+  --pass-rule: #CFE5D8;
+  --fail-rule: #F2CFC5;
+  --mark-strong: #FFD23F;
+  --hatch: #D9D4C8;
+  /* A switch's off track: at least 3:1 against the surface it sits on (WCAG 1.4.11) */
+  --switch-off: #8C909A;
+  /* On the dark ink surfaces (done banner, report decision) */
+  --ink-raised: #2A2F39;
+  --accent-on-dark: #F2A694;
+  --on-dark-fill: rgba(255, 255, 255, 0.08);
+  --on-dark-fill-hover: rgba(255, 255, 255, 0.16);
+  --on-dark-rule: rgba(255, 255, 255, 0.22);
+  --on-dark-rule-strong: rgba(255, 255, 255, 0.4);
+  --on-dark-muted: rgba(255, 255, 255, 0.72);
+  --paper-glass: rgba(246, 244, 238, 0.88);
+  /* Avatars */
+  --avatar-from: #1C3B5A;
+  --avatar-to: #2F6C7E;
+  --avatar-me: #E9D9C6;
+  --avatar-me-ink: #6B4A2A;
+  /* Customer-attested provenance */
+  --prov-customer-ink: #573887;
+  --prov-customer-rule: #A48BC9;
+  /* Calendar events */
+  --cal-repeat: #DCE3F7;
+  --cal-repeat-ink: #2A3F86;
+  /* The Connect guide card and its Google Cloud console mock */
+  --guide-bg: #FFFDF6;
+  --guide-rule: #EADFC2;
+  --guide-ink: #8A6A1F;
+  --console-bar: #F3F4F6;
+  --console-rule: #E5E7EB;
+  --console-dot: #D1D5DB;
+  --console-ink: #5F6368;
+  --console-link: #1A73E8;
+  /* Code blocks in reports */
+  --code-bg: #1A1D24;
+  --code-ink: #D9DCE3;
+  --code-comment: #A3ACBD;
+  --code-string: #A8D5B9;
+  /* Elevation */
+  --shadow-1: 0 1px 2px rgba(23, 22, 28, 0.08);
+  --shadow-2: 0 2px 8px rgba(17, 20, 24, 0.12);
+  --shadow-lift: 0 10px 30px -18px rgba(0, 0, 0, 0.4);
+  --shadow-sheet: 0 2px 4px rgba(40, 30, 10, 0.04), 0 30px 60px -30px rgba(40, 30, 10, 0.25);
+  --shadow-pop: 0 1px 2px rgba(0, 0, 0, 0.08), 0 16px 34px -14px rgba(40, 30, 20, 0.35);
+  --ring-soft: 0 0 0 3px rgba(21, 24, 30, 0.07);
+  --c-acc: #3B4DBA;
+  --c-task: #1C8580;
+  --c-qual: #87408C;
+  --c-cx: #BF7718;
+  --serif: "Newsreader Variable", "Iowan Old Style", "Charter", "Source Serif Pro", "Palatino Linotype", Georgia, serif;
+  --sans: "Inter Variable", "Inter", "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono Variable", "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  --shadow: 0 1px 2px rgba(25, 22, 15, .05), 0 6px 20px -10px rgba(25, 22, 15, .18);
+
+  /* Surfaces (existing token names remapped to concept-07 values) */
+  --paper-2: var(--rule2);
+  --paper-3: var(--rule);
+  --scrim: rgba(20, 18, 12, 0.4);
+
+  /* Ink */
+  --ink-2: var(--ink2);
+  --ink-3: var(--muted);
+  --ink-4: var(--faint);
+  --ink-inverse: #FFFFFF;
+
+  /* Rules */
+  --rule-2: var(--rule2);
+  --rule-strong: #CFC9BC;
+
+  /* Structure and brand */
+  --navy: var(--ink);
+  --navy-2: var(--ink2);
+  --navy-tint: #EEEBE4;
+  --navy-tint-2: var(--rule);
+  --brand-red: var(--accent);
+  --brand-red-press: #B83820;
+
+  /* Interaction */
+  --focus: var(--blue);
+  --hover: #F1EEE6;
+  --selected: var(--surface);
+  --selected-rule: var(--accent);
+
+  /* Evidence (one polarity: what the attack achieved) */
+  --ev-confirmed: var(--accent);
+  --ev-probable: var(--c-cx);
+  --ev-blocked: var(--blue);
+  --ev-no-action: #C9C3B5;
+  --ev-neutral: var(--faint);
+  --ev-confirmed-ink: #9E2E18;
+  --ev-blocked-ink: #1F449C;
+
+  /* Ember sequential ramp for density of exploit evidence */
+  --ember-50: var(--accent-soft);
+  --ember-100: var(--fail-soft);
+  --ember-200: #F2C6A6;
+  --ember-300: #EAA275;
+  --ember-400: var(--accent);
+  --ember-500: var(--fail);
+  --ember-600: #A83121;
+  --ember-700: #7E2317;
+
+  /* Operational status (connections, jobs); always paired with icon + label */
+  --ok: var(--pass);
+  --ok-tint: var(--pass-soft);
+  --warn-tint: var(--warn-soft);
+  --warn-ink: #7A4F00;
+  --bad: var(--fail);
+  --bad-tint: var(--fail-soft);
+
+  /* Provenance marks */
+  --prov-customer: var(--c-qual);
+
+  /* Type */
+  --font-ui: var(--sans);
+  --font-display: var(--serif);
+  --font-mono: var(--mono);
+
+  --text-2xs: 0.75rem;   /* 12px: floor for any workspace text */
+  --text-xs: 0.8125rem;  /* 13px: dense tables, metadata */
+  --text-sm: 0.875rem;   /* 14px: UI body */
+  --text-md: 1rem;       /* 16px: reading body */
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.5rem;    /* 40px: concept-07 .h1 */
+  --text-4xl: 3rem;
+
+  /* Space (4px grid) */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+  --s-8: 4rem;
+
+  --radius-1: 4px;
+  --radius-2: 9px;
+  --radius-3: 12px;
+
+  --shadow-pane: var(--shadow);
+  --shadow-pop: 0 14px 40px -12px rgba(0, 0, 0, .25);
+
+  /* Motion: short, decelerating, interruptible */
+  --ease-out: cubic-bezier(0.22, 0.8, 0.26, 1);
+  --ease-in-out: cubic-bezier(0.6, 0, 0.3, 1);
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+
+  --rail-w: 252px;
+  --bar-h: 58px;
+  --inspector-w: 26rem;
+  /* Summary pages stop growing here; workbenches (.page-wide) use the full width. */
+  --content-max: 1360px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-1: 0ms;
+    --dur-2: 0ms;
+    --dur-3: 0ms;
+  }
+}

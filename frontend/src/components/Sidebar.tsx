@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BrandLockup } from '../brand/BrandLockup';
 import {
   Home,
   FolderClosed,
@@ -196,40 +197,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       >
         {/* Brand Header */}
         <div className="flex h-20 items-center justify-between px-5 border-b border-[#E2DDD5] bg-white">
-          <div className="flex flex-col justify-center">
-            {/* Official Tech Mahindra Logo matching the attached image */}
-            <div
-              id="sidebar-tech-mahindra-logo"
-              className="flex items-center gap-2 select-none"
-            >
-              {/* Slanted red parallelogram */}
-              <svg
-                viewBox="0 0 60 110"
-                className="h-6 w-auto shrink-0"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-label="Tech Mahindra Logo"
-              >
-                <polygon points="4,40 56,10 56,80 4,110" fill="#E31837" />
-              </svg>
-              {/* TECH mahindra wordmark */}
-              <div className="flex flex-col justify-center leading-none">
-                <span className="text-[10.5px] font-black tracking-[0.16em] text-[#33373D] uppercase">
-                  TECH
-                </span>
-                <span className="text-[14px] font-extrabold tracking-tight text-[#E31837] lowercase">
-                  mahindra
-                </span>
-              </div>
-            </div>
-
-            {/* Sub-heading on the next line: ModelOS Annotate */}
-            <div id="sidebar-subheading" className="flex items-center gap-1.5 pt-1 pl-0.5">
-              <span className="text-xs font-bold tracking-tight text-slate-700">
-                ModelOS Annotate
-              </span>
-            </div>
-          </div>
+          <BrandLockup size="sm" stacked />
 
           {/* Close button for mobile */}
           <button

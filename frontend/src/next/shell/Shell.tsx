@@ -1,6 +1,6 @@
 /*
- * Shell A — "Review Desk". Concept-07's rail: brand, project switcher, the project's
- * views, then workspace items. The rail becomes a drawer below 1024px.
+ * The app shell — concept-07's rail: brand, project switcher, the project's views, then
+ * workspace items. The rail becomes a drawer below 1024px.
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Menu, Plus, X } from 'lucide-react';
@@ -9,7 +9,7 @@ import type { Project } from '../../showcase/content';
 import { href, projectHref, type Route } from '../router';
 import { PROJECT_TABS, WORKSPACE_ITEMS, crumbFor } from '../nav';
 import { ProjectSwitcher } from './ProjectSwitcher';
-import './shellA.css';
+import './shell.css';
 
 function RailContents({ route, project, onNavigate }: { route: Route; project: Project; onNavigate?: () => void }) {
   return (
@@ -64,7 +64,7 @@ function RailContents({ route, project, onNavigate }: { route: Route; project: P
   );
 }
 
-export function ShellA({ route, project, children }: { route: Route; project: Project; children: ReactNode }) {
+export function Shell({ route, project, children }: { route: Route; project: Project; children: ReactNode }) {
   const [drawer, setDrawer] = useState(false);
   const menuBtn = useRef<HTMLButtonElement>(null);
   const crumbs = crumbFor(route, project);
@@ -82,7 +82,7 @@ export function ShellA({ route, project, children }: { route: Route; project: Pr
   }, [drawer]);
 
   return (
-    <div className="app-a">
+    <div className="app">
       <aside className="ra-rail">
         <RailContents route={route} project={project} />
       </aside>

@@ -1,6 +1,6 @@
 /*
  * The navigation model: the single source of every label, destination and count.
- * Both shells render from it, so the two layouts can never disagree about structure.
+ * The rail renders from it, so labels and routes are defined once.
  */
 import {
   ChartColumn,

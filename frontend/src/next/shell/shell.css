@@ -1,5 +1,5 @@
-/* Shell A — Review Desk: concept-07 rail, paper and ink, serif titles. */
-.app-a {
+/* App shell — concept-07 rail, paper and ink, serif titles. */
+.app {
   --title-font: var(--serif);
   --title-weight: 400;
   --title-ls: -0.02em;
@@ -35,12 +35,12 @@
   border-radius: 6px;
 }
 
-.app-a .pswitch-btn {
+.app .pswitch-btn {
   width: 100%;
 }
 
 /* The rail scrolls, which clips overflow, so the menu stays within its width. */
-.app-a .pswitch-menu {
+.app .pswitch-menu {
   width: 100%;
 }
 
@@ -253,17 +253,17 @@
   right: 12px;
 }
 
-/* ---------- Page treatment in A ---------- */
-.app-a .card {
+/* ---------- Page treatment ---------- */
+.app .card {
   background: var(--surface);
 }
 
-.app-a .table th {
+.app .table th {
   border-bottom-color: var(--ink);
 }
 
 @media (max-width: 1024px) {
-  .app-a {
+  .app {
     grid-template-columns: 1fr;
   }
   .ra-rail {

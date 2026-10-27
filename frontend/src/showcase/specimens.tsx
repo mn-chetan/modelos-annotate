@@ -1,7 +1,7 @@
 /*
  * Product-shaped specimens shared by the landing explorations. Each one renders a
- * stage of the annotation workflow on real sample material; variants decide layout,
- * tone and choreography around them.
+ * stage of the annotation workflow on real sample material; pages decide layout and
+ * choreography around them.
  */
 import { CSSProperties } from 'react';
 import {
@@ -34,19 +34,17 @@ function boxState(b: Box, stage: Stage) {
 /** Detection specimen: the street frame with drafted, reviewed or approved boxes. */
 export function DetectionFrame({
   stage,
-  tone = 'light',
   showConfidence = true,
   className = '',
   boxes = streetBoxes,
 }: {
   stage: Stage;
-  tone?: 'light' | 'dark';
   showConfidence?: boolean;
   className?: string;
   boxes?: Box[];
 }) {
   return (
-    <div className={`spec-frame spec-${tone} ${className}`} data-stage={stage}>
+    <div className={`spec-frame ${className}`} data-stage={stage}>
       <img src={images.street} alt="City street with buses, a truck, cars, a motorcyclist and a cyclist" />
       <div className="spec-layer" aria-hidden>
         {boxes.map((b, i) => {
@@ -79,15 +77,13 @@ export function DetectionFrame({
 /** PII specimen: plates and faces found, then masked. */
 export function PiiFrame({
   masked,
-  tone = 'light',
   className = '',
 }: {
   masked: boolean;
-  tone?: 'light' | 'dark';
   className?: string;
 }) {
   return (
-    <div className={`spec-frame spec-${tone} ${className}`} data-masked={masked}>
+    <div className={`spec-frame ${className}`} data-masked={masked}>
       {/* Zoomed to street level so plates and faces read at specimen size. */}
       <div className="spec-zoom">
         <img src={images.buses} alt="Busy shopping street with buses, taxis and pedestrians" />
@@ -105,16 +101,14 @@ export function PiiFrame({
 export function EntityText({
   stage,
   spans = textSample,
-  tone = 'light',
   className = '',
 }: {
   stage: Stage;
   spans?: Span[];
-  tone?: 'light' | 'dark';
   className?: string;
 }) {
   return (
-    <p className={`spec-text spec-${tone} ${className}`} data-stage={stage}>
+    <p className={`spec-text ${className}`} data-stage={stage}>
       {spans.map((s, i) => {
         if (!s.type || stage === 'raw') return <span key={i}>{s.text}</span>;
         const flagged = stage === 'review' && s.fix;
@@ -150,17 +144,15 @@ const trackBoxes = tracks.map((t) => ({ ...t, box: streetBoxes.find((b) => b.id 
  */
 export function TrackFrame({
   playing = true,
-  tone = 'light',
   showTracks = true,
   className = '',
 }: {
   playing?: boolean;
-  tone?: 'light' | 'dark';
   showTracks?: boolean;
   className?: string;
 }) {
   return (
-    <div className={`spec-frame spec-video spec-${tone} ${className}`} data-playing={playing}>
+    <div className={`spec-frame spec-video ${className}`} data-playing={playing}>
       <div className="spec-pan">
         <img src={images.street} alt="Video frame of a city street" />
         <div className="spec-layer" aria-hidden>
@@ -185,16 +177,14 @@ export function TrackFrame({
 export function Filmstrip({
   frames = 8,
   playing = true,
-  tone = 'light',
   className = '',
 }: {
   frames?: number;
   playing?: boolean;
-  tone?: 'light' | 'dark';
   className?: string;
 }) {
   return (
-    <div className={`spec-strip spec-${tone} ${className}`} data-playing={playing} aria-hidden>
+    <div className={`spec-strip ${className}`} data-playing={playing} aria-hidden>
       {Array.from({ length: frames }, (_, i) => (
         <div key={i} className="spec-strip-cell" style={{ '--i': i, '--n': frames } as CSSProperties}>
           <img src={images.street} alt="" />

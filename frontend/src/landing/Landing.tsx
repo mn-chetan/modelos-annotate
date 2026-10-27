@@ -1,13 +1,13 @@
 /*
- * Direction A — "The Review Desk". Editorial, reading-first, low motion.
+ * The landing page — "The Review Desk". Editorial, reading-first, low motion.
  * Concept-07 paper and ink; a serif headline over one large annotated figure;
  * capabilities as an index, the workflow as a ledger.
  */
 import { useEffect, useState, type ReactNode } from 'react';
 import { motion, MotionConfig } from 'motion/react';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
-import { BrandLockup } from '../../../src/brand/BrandLockup';
-import { workspaceHref, capabilities, streetBoxes, workflow, type Modality } from '../../../src/showcase/content';
+import { BrandLockup } from '../brand/BrandLockup';
+import { WORKSPACE_HREF, capabilities, streetBoxes, workflow, type Modality } from '../showcase/content';
 import {
   DetectionFrame,
   EntityText,
@@ -16,8 +16,8 @@ import {
   PiiFrame,
   TrackFrame,
   type Stage,
-} from '../../../src/showcase/specimens';
-import './a.css';
+} from '../showcase/specimens';
+import './landing.css';
 
 const reveal = {
   initial: { opacity: 0, y: 14 },
@@ -65,7 +65,7 @@ const specimenFor: Record<Modality, ReactNode> = {
 
 const actorClass: Record<string, string> = { AI: 'is-ai', Reviewer: 'is-rev', QC: 'is-qc', Team: 'is-team' };
 
-export default function ReviewDesk() {
+export default function Landing() {
   const stage = useHeroStage();
   const moto = streetBoxes.find((b) => b.id === 'b3')!;
 
@@ -81,7 +81,7 @@ export default function ReviewDesk() {
             <a href="#workflow">Workflow</a>
             <a href="#quality">Quality</a>
           </nav>
-          <a className="a-btn a-btn-ink a-btn-sm" href={workspaceHref('a')}>
+          <a className="a-btn a-btn-ink a-btn-sm" href={WORKSPACE_HREF}>
             Open workspace
           </a>
         </header>
@@ -100,7 +100,7 @@ export default function ReviewDesk() {
                 person, and audits the result before it leaves.
               </p>
               <div className="a-actions">
-                <a className="a-btn a-btn-ink" href={workspaceHref('a')}>
+                <a className="a-btn a-btn-ink" href={WORKSPACE_HREF}>
                   Open workspace <ArrowRight size={16} aria-hidden />
                 </a>
                 <a className="a-link" href="#workflow">
@@ -230,7 +230,7 @@ export default function ReviewDesk() {
             <motion.div {...reveal}>
               <h2 className="a-display a-display-sm">Start with a project.</h2>
               <p className="a-lede">Bring a dataset, name the classes, and let the first pass run.</p>
-              <a className="a-btn a-btn-ink" href={workspaceHref('a')}>
+              <a className="a-btn a-btn-ink" href={WORKSPACE_HREF}>
                 Open workspace <ArrowUpRight size={16} aria-hidden />
               </a>
             </motion.div>

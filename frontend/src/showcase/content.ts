@@ -1,6 +1,5 @@
 /*
- * Shared content for the landing-page explorations. Every variant draws on the same
- * capabilities and specimens so the comparison is about direction, not copy.
+ * Shared showcase content for the landing page and the app's static screens.
  * Specimen data is illustrative sample output, not product metrics.
  */
 import streetUrl from './assets/street.webp';
@@ -8,8 +7,8 @@ import busesUrl from './assets/buses.webp';
 
 export const images = { street: streetUrl, buses: busesUrl };
 
-/** Where each landing direction's "Open workspace" leads: the matching app shell. */
-export const workspaceHref = (shell: 'a' | 'b') => `/app1/next.html?v=${shell}#/projects`;
+/** Where the landing page's "Open workspace" leads. */
+export const WORKSPACE_HREF = '/app1/next.html#/projects';
 
 export type Modality = 'image' | 'text' | 'video';
 
@@ -106,11 +105,6 @@ export const textSample: Span[] = [
   { text: ' depot cleared its backlog two days early and that she expects the new routing to hold through the monsoon.' },
 ];
 
-export const textVerdicts = {
-  sentiment: { label: 'Positive', conf: 0.91 },
-  category: { label: 'Operations update', conf: 0.88 },
-  relation: { from: 'Anika Rao', rel: 'works_at', to: 'Halden Freight' },
-};
 
 export const entityColor: Record<EntityType, string> = {
   PERSON: 'var(--c-acc)',
@@ -129,16 +123,6 @@ export const tracks = [
   { id: 44, boxId: 'b4', label: 'cyclist' },
 ];
 
-export const exportSample = `{
-  "asset": "street_0412.jpg",
-  "label": "motorcycle",
-  "bbox": [719, 488, 67, 144],
-  "source": "ai",
-  "ai_label": "person",
-  "confidence": 0.58,
-  "review": { "action": "corrected" },
-  "qc": { "status": "approved" }
-}`;
 
 /* ---------- Sample projects for the app shell showcase ---------- */
 

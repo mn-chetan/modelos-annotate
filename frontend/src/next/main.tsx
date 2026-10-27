@@ -1,14 +1,12 @@
 import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { MotionConfig } from 'motion/react';
 import '@fontsource-variable/inter/index.css';
 import '@fontsource-variable/jetbrains-mono/index.css';
 import '@fontsource-variable/newsreader/opsz.css';
 import './app.css';
 import { href, navigate, useRoute, type Route } from './router';
 import { useCurrentProject } from './useProject';
-import { ShellA } from './shell/ShellA';
-import { ShellB } from './shell/ShellB';
+import { Shell } from './shell/Shell';
 import { ProjectsPage } from './pages/Projects';
 import { NewProjectPage } from './pages/NewProject';
 import { OverviewPage } from './pages/Overview';
@@ -18,11 +16,6 @@ import { QualityPage } from './pages/Quality';
 import { ReportsPage } from './pages/Reports';
 import { AdminPage } from './pages/Admin';
 import type { Project } from '../showcase/content';
-
-const params = new URLSearchParams(location.search);
-const shell = params.get('v') === 'b' ? 'b' : 'a';
-const showChrome = params.get('chrome') !== '0';
-const Shell = shell === 'a' ? ShellA : ShellB;
 
 function page(route: Route, project: Project) {
   switch (route.id) {
@@ -48,23 +41,6 @@ function page(route: Route, project: Project) {
   }
 }
 
-function Switcher({ route }: { route: Route }) {
-  const options = [
-    ['a', 'Review Desk'],
-    ['b', 'Workbench'],
-  ] as const;
-  return (
-    <nav className="xp-switch" aria-label="Shell directions">
-      {options.map(([k, name]) => (
-        <a key={k} href={`?v=${k}${href(route)}`} aria-current={k === shell ? 'page' : undefined}>
-          <b>{k.toUpperCase()}</b>
-          <span>{name}</span>
-        </a>
-      ))}
-    </nav>
-  );
-}
-
 function App() {
   const route = useRoute();
   const project = useCurrentProject(route);
@@ -84,12 +60,9 @@ function App() {
   }, [route, project]);
 
   return (
-    <MotionConfig reducedMotion="user">
-      <Shell route={route} project={project}>
-        {page(route, project)}
-      </Shell>
-      {showChrome ? <Switcher route={route} /> : null}
-    </MotionConfig>
+    <Shell route={route} project={project}>
+      {page(route, project)}
+    </Shell>
   );
 }
 

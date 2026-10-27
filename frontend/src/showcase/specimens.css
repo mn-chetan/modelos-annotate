@@ -282,24 +282,6 @@
   border-bottom-color: var(--pass);
 }
 
-.spec-dark .spec-ent {
-  --ent-on: color-mix(in srgb, var(--ent) 45%, white);
-  background: color-mix(in srgb, var(--ent) 30%, transparent);
-  border-bottom-color: var(--ent-on);
-}
-
-.spec-dark .spec-ent sup {
-  color: var(--ent-on);
-}
-
-.spec-dark .spec-ent.is-flag {
-  background: rgba(255, 210, 63, 0.18);
-  outline-color: var(--mark-strong);
-}
-
-.spec-dark .spec-ent.is-flag sup {
-  color: var(--mark);
-}
 
 @media (prefers-reduced-motion: reduce) {
   .spec-pan,

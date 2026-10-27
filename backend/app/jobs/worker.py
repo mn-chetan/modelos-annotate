@@ -1174,6 +1174,14 @@ class BatchWorker:
                 )
                 return
 
+            if self.settings.demo_image_pipeline:
+                from app.services.demo_inference import run_demo_image
+                try:
+                    await run_demo_image(db, self.settings, self.storage, self.runtime, project, asset, item, batch_id)
+                except Exception as exc:
+                    await self._fail_item(session, item, batch_id, str(exc), asset_id=asset.id)
+                return
+
             # Model availability is determined once and reused by the
             # dynamic planner and execution loop.
             statuses = {}

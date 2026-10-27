@@ -39,6 +39,9 @@ class Settings(BaseSettings):
 
     # Controls whether a demo/seed project is inserted when the database is empty.
     # MUST remain False in production. Only set True in local dev or automated tests.
+    demo_image_pipeline: bool = False
+    demo_qc_bypass: bool = False
+
     seed_demo_data: bool = Field(default=False, alias="SEED_DEMO_DATA")
 
     # Firestore is the only supported production persistence provider.  The

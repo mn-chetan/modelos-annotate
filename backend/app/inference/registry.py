@@ -589,6 +589,9 @@ def create_registry_from_settings(
         or os.getenv("USE_MOCK_MODELS", "").lower() in ("1", "true", "yes")
     )
 
+    if use_fake and settings.demo_image_pipeline:
+        raise ValueError("Demo image pipeline requires real model adapters")
+
     if use_fake:
         yolo_enabled = settings.yolo26_enabled or use_fake
         faster_rcnn_enabled = settings.faster_rcnn_enabled or use_fake
@@ -710,19 +713,19 @@ def create_registry_from_settings(
     registry.register(ModelKey.CLIP.value, clip, enabled=settings.clip_enabled)
 
     tracker = TrackerAdapter(model_id="bytetrack_expert")
-    registry.register(ModelKey.TRACKER.value, tracker, enabled=True)
+    registry.register(ModelKey.TRACKER.value, tracker, enabled=not settings.demo_image_pipeline)
 
     gliner = GlinerAdapter(model_id="gliner2_ner_expert")
-    registry.register(ModelKey.GLINER.value, gliner, enabled=True)
+    registry.register(ModelKey.GLINER.value, gliner, enabled=not settings.demo_image_pipeline)
 
     qwen_emb = QwenEmbeddingAdapter(model_id="qwen3_embedding_expert")
-    registry.register(ModelKey.QWEN3_EMBEDDING.value, qwen_emb, enabled=True)
+    registry.register(ModelKey.QWEN3_EMBEDDING.value, qwen_emb, enabled=not settings.demo_image_pipeline)
 
     qwen_rr = QwenRerankerAdapter(model_id="qwen3_reranker_expert")
-    registry.register(ModelKey.QWEN3_RERANKER.value, qwen_rr, enabled=True)
+    registry.register(ModelKey.QWEN3_RERANKER.value, qwen_rr, enabled=not settings.demo_image_pipeline)
 
     paddleocr = PaddleOcrAdapter(model_id="paddleocr_vl_layout_expert")
-    registry.register(ModelKey.PADDLEOCR.value, paddleocr, enabled=True)
+    registry.register(ModelKey.PADDLEOCR.value, paddleocr, enabled=not settings.demo_image_pipeline)
 
     return registry
 

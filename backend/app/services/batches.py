@@ -506,7 +506,9 @@ class BatchService:
 
         plan = await self.db.project_plans.find_one({"project_id": project_id})
         workflow: list[Any] = []
-        if plan and plan.get("status") == PlanStatus.APPROVED.value and plan.get("workflow"):
+        if self.settings.demo_image_pipeline:
+            workflow = [{"key": key, "required": True} for key in ("florence", "yolo26", "dino")]
+        elif plan and plan.get("status") == PlanStatus.APPROVED.value and plan.get("workflow"):
             workflow = list(plan["workflow"])
         elif plan and plan.get("workflow") and plan.get("status") != PlanStatus.APPROVED.value:
             raise ValidationAppError(

@@ -24,7 +24,7 @@ class FlorenceAdapter:
         self,
         *,
         model_id: str = "microsoft/Florence-2-base",
-        revision: str | None = "b75489f6655cdd02404e84b96e5b565780a423e8",
+        revision: str | None = "5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac",
         device_preference: str = "auto",
         cache_dir: Path | None = None,
     ) -> None:
@@ -58,26 +58,6 @@ class FlorenceAdapter:
             ) from exc
 
         try:
-            try:
-                import transformers.tokenization_utils_fast
-                if hasattr(transformers.tokenization_utils_fast, "TokenizersBackend") and not hasattr(transformers.tokenization_utils_fast.TokenizersBackend, "additional_special_tokens"):
-                    setattr(transformers.tokenization_utils_fast.TokenizersBackend, "additional_special_tokens", property(lambda self: []))
-            except Exception:
-                pass
-
-            try:
-                import transformers.configuration_utils
-                if not hasattr(transformers.configuration_utils.PretrainedConfig, "forced_bos_token_id"):
-                    transformers.configuration_utils.PretrainedConfig.forced_bos_token_id = None
-            except Exception:
-                pass
-
-            try:
-                orig_linspace = torch.linspace
-                torch.linspace = lambda *a, **kw: orig_linspace(*a, **{**kw, "device": "cpu"})
-            except Exception:
-                pass
-
             kwargs: dict[str, Any] = {"trust_remote_code": True}
             if self.revision:
                 kwargs["revision"] = self.revision

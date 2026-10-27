@@ -91,13 +91,6 @@
   border-radius: 3px;
 }
 
-.ov-score-detail {
-  margin: 0;
-  font-size: 12.5px;
-  line-height: 1.4;
-  color: var(--muted);
-}
-
 .ov-score-keys {
   display: flex;
   flex-wrap: wrap;

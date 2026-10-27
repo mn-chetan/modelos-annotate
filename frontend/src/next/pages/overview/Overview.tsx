@@ -34,18 +34,20 @@ import { ClassTable, HardestItems, PeopleTable } from './tables';
 import './overview.css';
 
 const REST = 'var(--rule2)';
+/** A named remainder: visible enough to key with a dot, quieter than any series colour. */
+const NOT_YET = '#B9B2A3';
 const FIX_COLORS = ['#2A57C0', '#D39B0A', '#1F8A5B', '#8D4AA6', '#D2432C'];
 
 type Seg = { value: number; color: string; label: string; key?: string };
 
 /**
- * A scorecard: what it counts, the number, its share of the whole, a bar, and one line of
- * detail. When the bar splits into named parts (segments with a `key`), the detail line
- * becomes a key, one dot and number per part, so the split reads without a sentence.
+ * A scorecard: what it counts, the number, its share of the whole, and a bar. When the bar
+ * splits into named parts (segments with a `key`), each part gets a dot and its number
+ * underneath, so the split reads without a sentence.
  */
-function Score({ label, value, share, of, segs, detail }: { label: string; value: string; share?: string; of?: string; segs: Seg[]; detail?: string }) {
+function Score({ label, value, share, of, segs }: { label: string; value: string; share?: string; of?: string; segs: Seg[] }) {
   const total = segs.reduce((s, x) => s + x.value, 0) || 1;
-  const keyed = segs.filter((s) => s.key && s.value > 0);
+  const keyed = segs.filter((s) => s.key);
   return (
     <div className="ov-score">
       <p className="ov-score-label">{label}</p>
@@ -67,8 +69,6 @@ function Score({ label, value, share, of, segs, detail }: { label: string; value
             </li>
           ))}
         </ul>
-      ) : detail ? (
-        <p className="ov-score-detail">{detail}</p>
       ) : null}
     </div>
   );
@@ -152,10 +152,9 @@ export function OverviewPage({ project }: { project: Project }) {
           share={pctText(o.drafted / o.assets)}
           of={`of ${o.unit}`}
           segs={[
-            { value: o.drafted, color: AI_COLOR, label: 'Annotated by AI' },
-            { value: o.queued, color: REST, label: 'Not annotated yet' },
+            { value: o.drafted, color: AI_COLOR, label: 'Annotated by AI', key: 'annotated' },
+            { value: o.queued, color: NOT_YET, label: 'Not annotated yet', key: 'not yet' },
           ]}
-          detail={o.queued ? `${fmt(o.queued)} not annotated yet` : `Every ${o.unitOne} has an AI annotation`}
         />
         <Score
           label="Approved by AI"
@@ -163,10 +162,9 @@ export function OverviewPage({ project }: { project: Project }) {
           share={pctText(o.autoAccepted / Math.max(1, o.drafted))}
           of="of AI annotations"
           segs={[
-            { value: o.autoAccepted, color: AI_COLOR, label: 'Approved by AI' },
-            { value: o.toPeople, color: REST, label: 'Sent to human review' },
+            { value: o.autoAccepted, color: AI_COLOR, label: 'Approved by AI', key: `at ${AI_LINE} or higher` },
+            { value: o.toPeople, color: REVIEW_COLOR, label: 'Sent to human review', key: `below ${AI_LINE}` },
           ]}
-          detail={`AI confidence ${AI_LINE} or higher, so no review`}
         />
         <Score
           label="Sent to human review"
@@ -177,7 +175,6 @@ export function OverviewPage({ project }: { project: Project }) {
             { value: reviewedSoFar, color: APPROVED_COLOR, label: 'Approved by reviewers', key: 'approved' },
             { value: o.inReview, color: REVIEW_COLOR, label: 'In human review', key: 'in review' },
           ]}
-          detail={`All ${fmt(reviewedSoFar)} approved`}
         />
         <Score
           label="Approved"
@@ -197,7 +194,7 @@ export function OverviewPage({ project }: { project: Project }) {
           of={`${o.labelNoun} reviewed`}
           segs={[
             { value: o.labelsReviewed - o.corrections, color: 'var(--ink2)', label: 'Kept unchanged', key: 'kept' },
-            { value: o.corrections, color: '#B9B2A3', label: 'Corrected by reviewers', key: 'corrected' },
+            { value: o.corrections, color: NOT_YET, label: 'Corrected by reviewers', key: 'corrected' },
           ]}
         />
       </section>

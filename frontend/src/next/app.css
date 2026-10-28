@@ -51,6 +51,18 @@ button {
   border-radius: 6px;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ---------- Buttons ---------- */
 .btn {
   display: inline-flex;
@@ -71,6 +83,19 @@ button {
 
 .btn:active {
   transform: translateY(1px);
+}
+
+.btn:disabled,
+.btn.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* A file input wrapped in a label-button keeps the button's focus ring. */
+.btn:has(input[type='file']:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .btn-sm {
@@ -116,6 +141,24 @@ button {
   background: var(--surface);
   border-color: var(--fail-rule);
   color: var(--fail-ink);
+}
+
+.error-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 18px;
+  padding: 10px 14px;
+  border: 1px solid var(--fail-rule);
+  border-radius: 6px;
+  background: var(--fail-soft);
+  color: var(--fail-ink);
+  font-size: 13.5px;
+}
+
+.error-note svg {
+  flex: none;
+  margin-top: 2px;
 }
 
 .sample-chip {
@@ -747,6 +790,34 @@ button {
   color: var(--pass-ink);
 }
 
+.empty-icon.is-fail {
+  background: var(--fail-soft);
+  color: var(--fail-ink);
+}
+
+.page-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation-duration: 2.4s;
+  }
+}
+
 .empty h2 {
   margin: 6px 0 0;
   font-family: var(--title-font);
@@ -815,6 +886,15 @@ button {
 }
 
 /* ---------- Tabs inside a page ---------- */
+.sample-note {
+  max-width: 68ch;
+  margin: -8px 0 22px;
+  padding-left: 12px;
+  border-left: 2px dashed var(--rule-strong);
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .subtabs {
   display: flex;
   gap: 4px;
@@ -876,4 +956,20 @@ button {
     min-width: 0;
     flex: 1;
   }
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+}
+
+.search:focus-within {
+  border-color: var(--rule-strong);
+  box-shadow: var(--ring-soft);
 }

@@ -6,8 +6,8 @@ import {
   type SVGProps,
 } from 'react';
 import type { Annotation } from '../store';
-import { colourStyle } from './annotation-ui';
-import './review.css';
+import { OTHER_COLOUR, colourStyle } from './annotation-ui';
+import './annotation.css';
 
 type Props = {
   annotations: Annotation[];
@@ -19,6 +19,8 @@ type Props = {
   visible?: boolean;
   svgRef?: RefObject<SVGSVGElement | null>;
   editable?: boolean;
+  /** A thumbnail: boxes only, no captions or pointer interaction. */
+  quiet?: boolean;
   onHover?: (id: string) => void;
   onSelect?: (id: string) => void;
 } & Omit<SVGProps<SVGSVGElement>, 'onSelect'>;
@@ -32,6 +34,8 @@ type Caption = {
   index: number;
   annotation: Annotation;
 };
+/** Rejected boxes stay visible, dashed and grey, so a reviewer can still see what was turned down. */
+const REJECTED = '#8C909A';
 const within = (n: number, max: number) => Math.max(4, Math.min(n, max));
 /** Geometry stays in image percentages. Typography and handles stay in screen pixels. */
 export function BoxOverlay({
@@ -44,6 +48,7 @@ export function BoxOverlay({
   visible = true,
   svgRef,
   editable = false,
+  quiet = false,
   onHover,
   onSelect,
   ...svgProps
@@ -83,7 +88,7 @@ export function BoxOverlay({
     )
     .sort((a, b) => Number(a.id === selected) - Number(b.id === selected));
   const captions: Caption[] = [];
-  if (visible && size.width && size.height) {
+  if (visible && !quiet && size.width && size.height) {
     // Reserve the focused label first; keep other labels from overlapping it or each other.
     const ordered = [...boxes].sort(
       (a, b) => Number(b.id === focus) - Number(a.id === focus),
@@ -133,7 +138,7 @@ export function BoxOverlay({
     }
   }
   return (
-    <div className={`annotation-overlay${focus ? ' has-focus' : ''}`}>
+    <div className={`annotation-overlay${focus ? ' has-focus' : ''}${quiet ? ' is-quiet' : ''}`}>
       <svg
         {...svgProps}
         ref={ref}
@@ -152,10 +157,7 @@ export function BoxOverlay({
       >
         {boxes.map((a) => {
           const active = a.id === focus;
-          const colour =
-            a.review_status === 'rejected'
-              ? '#F58282'
-              : colours[a.label] || '#47B8E0';
+          const colour = a.review_status === 'rejected' ? REJECTED : colours[a.label] || OTHER_COLOUR;
           const hw = 800 / (size.width || 1000),
             hh = 800 / (size.height || 600);
           return (
@@ -165,7 +167,8 @@ export function BoxOverlay({
               className={`annotation-box${active ? ' is-focused' : ''}${a.id === selected ? ' is-selected' : ''}`}
               style={{
                 ...colourStyle(colour),
-                opacity: focus && !active ? 0.3 : 1,
+                // Hovering spotlights one box; a selection only steps the others back.
+                opacity: focus && !active ? (hovered ? 0.3 : 0.6) : 1,
               }}
               onPointerEnter={() => onHover?.(a.id)}
               onPointerLeave={() => onHover?.('')}
@@ -177,9 +180,9 @@ export function BoxOverlay({
                 width={a.w}
                 height={a.h}
                 stroke={colour}
-                strokeWidth={active ? 2.5 : 1.5}
+                strokeWidth={active ? 2.5 : quiet ? 1.25 : 1.5}
                 vectorEffect="non-scaling-stroke"
-                fill={active ? '#ffffff0d' : 'transparent'}
+                fill={active ? 'rgba(255, 255, 255, 0.06)' : 'transparent'}
                 strokeDasharray={
                   a.review_status === 'rejected' ? '5 4' : undefined
                 }
@@ -212,9 +215,7 @@ export function BoxOverlay({
             className={`box-caption${c.id === focus ? ' is-focused' : ''}`}
             style={{
               ...colourStyle(
-                c.annotation.review_status === 'rejected'
-                  ? '#F58282'
-                  : colours[c.annotation.label] || '#47B8E0',
+                c.annotation.review_status === 'rejected' ? REJECTED : colours[c.annotation.label] || OTHER_COLOUR,
               ),
               left: c.x,
               top: c.y,

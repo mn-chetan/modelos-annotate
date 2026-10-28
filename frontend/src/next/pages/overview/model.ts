@@ -1,349 +1,288 @@
 /*
- * Sample analytics for the Overview. Every figure derives from the showcase project's
- * counts plus a per-task profile, so the numbers agree with each other and with the rest
- * of the app (badges, queues, the projects table). Illustrative, not product data: the real
- * values come from the production dashboard endpoints.
- *
- * The page answers how much the AI did on its own and how much went to people, so the
- * model works in those terms. Nothing here is measured over time.
+ * The Overview's figures, computed from a live project's items and labels. The page answers
+ * how much the AI did on its own and how much went to people, so the model works in those
+ * terms. Nothing here is measured over time, and nothing is invented: where the evidence is
+ * thin, the counts behind each figure travel with it so the page can say so.
  */
-import { images, piiRegions, streetBoxes, textSamples, tickets, type Box, type Project, type TaskView } from '../../../showcase/content';
-
-/** The confidence at or above which the AI's annotation is approved without review. */
-export const AI_LINE = 0.95;
-
-/* ---------- Deterministic noise ---------- */
-
-function seeded(key: string) {
-  let h = 2166136261;
-  for (const c of key) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
-  return () => {
-    h = Math.imul(h ^ (h >>> 15), 2246822507);
-    h = Math.imul(h ^ (h >>> 13), 3266489909);
-    return ((h ^= h >>> 16) >>> 0) / 4294967296;
-  };
-}
-
-/** Split an integer total by weights so the parts sum exactly (largest remainder). */
-function split(total: number, weights: number[]) {
-  const sum = weights.reduce((a, b) => a + b, 0) || 1;
-  const exact = weights.map((w) => (w / sum) * total);
-  const ints = exact.map(Math.floor);
-  let rest = total - ints.reduce((a, b) => a + b, 0);
-  exact
-    .map((v, i) => [v - Math.floor(v), i] as const)
-    .sort((a, b) => b[0] - a[0])
-    .forEach(([, i]) => {
-      if (rest-- > 0) ints[i]++;
-    });
-  return ints;
-}
-
-/* ---------- Per-task profiles ---------- */
-
-type Profile = {
-  /** Share of AI annotations at or above the approval line. */
-  approvedByAi: number;
-  /** Share of the AI's labels reviewers kept unchanged. */
-  kept: number;
-  labelsPerItem: number;
-  labelNoun: string;
-  /** Share of a reviewer's items where they changed anything. */
-  itemEditRate: number;
-  team: number;
-  /** Per class, in project order: share of labels, mean AI confidence, weight of corrections. */
-  classes: { share: number; conf: number; corr: number }[];
-  /** Which classes the model mixes up: [class a, class b, weight]. */
-  confusions: [number, number, number][];
-  /** Kinds of fix reviewers make, after TIDE's error types, with their shares. */
-  fixes: [string, number][];
-};
-
-const profiles: Record<TaskView, Profile> = {
-  detection: {
-    approvedByAi: 0.58,
-    kept: 0.912,
-    labelsPerItem: 9.4,
-    labelNoun: 'boxes',
-    itemEditRate: 0.38,
-    team: 5,
-    classes: [
-      { share: 0.52, conf: 0.93, corr: 12 },
-      { share: 0.08, conf: 0.95, corr: 2 },
-      { share: 0.07, conf: 0.91, corr: 4 },
-      { share: 0.06, conf: 0.74, corr: 6 },
-      { share: 0.05, conf: 0.71, corr: 9 },
-      { share: 0.22, conf: 0.79, corr: 31 },
-    ],
-    confusions: [[5, 3, 5], [5, 4, 4], [3, 4, 3], [0, 2, 2], [1, 2, 2]],
-    fixes: [['Wrong class', 0.38], ['Box adjusted', 0.31], ['Missed object', 0.17], ['Not an object', 0.1], ['Duplicate box', 0.04]],
-  },
-  pii: {
-    approvedByAi: 0.71,
-    kept: 0.94,
-    labelsPerItem: 6.1,
-    labelNoun: 'regions',
-    itemEditRate: 0.21,
-    team: 3,
-    classes: [
-      { share: 0.68, conf: 0.93, corr: 6 },
-      { share: 0.32, conf: 0.86, corr: 14 },
-    ],
-    confusions: [[0, 1, 1]],
-    fixes: [['Mask adjusted', 0.44], ['Missed region', 0.33], ['Not personal data', 0.17], ['Wrong type', 0.06]],
-  },
-  ner: {
-    approvedByAi: 0.52,
-    kept: 0.893,
-    labelsPerItem: 7.8,
-    labelNoun: 'entities',
-    itemEditRate: 0.33,
-    team: 6,
-    classes: [
-      { share: 0.24, conf: 0.95, corr: 6 },
-      { share: 0.31, conf: 0.84, corr: 22 },
-      { share: 0.22, conf: 0.86, corr: 17 },
-      { share: 0.23, conf: 0.97, corr: 3 },
-    ],
-    confusions: [[1, 2, 5], [0, 1, 1], [2, 1, 2], [3, 1, 0.3]],
-    fixes: [['Wrong entity type', 0.41], ['Span boundary fixed', 0.32], ['Missed entity', 0.19], ['Not an entity', 0.08]],
-  },
-  sentiment: {
-    approvedByAi: 0.66,
-    kept: 0.93,
-    labelsPerItem: 1,
-    labelNoun: 'labels',
-    itemEditRate: 0.07,
-    team: 4,
-    classes: [
-      { share: 0.41, conf: 0.92, corr: 19 },
-      { share: 0.33, conf: 0.81, corr: 11 },
-      { share: 0.26, conf: 0.9, corr: 7 },
-    ],
-    confusions: [[0, 1, 3], [1, 2, 2], [0, 2, 1]],
-    fixes: [['Wrong sentiment', 1]],
-  },
-  tracking: {
-    approvedByAi: 0.4,
-    kept: 0.86,
-    labelsPerItem: 14,
-    labelNoun: 'tracks',
-    itemEditRate: 0.52,
-    team: 2,
-    classes: [
-      { share: 0.55, conf: 0.9, corr: 5 },
-      { share: 0.1, conf: 0.93, corr: 1 },
-      { share: 0.09, conf: 0.89, corr: 2 },
-      { share: 0.13, conf: 0.72, corr: 3 },
-      { share: 0.13, conf: 0.7, corr: 5 },
-    ],
-    confusions: [[3, 4, 4], [0, 2, 2], [1, 2, 1]],
-    fixes: [['Box adjusted', 0.34], ['Identity switch', 0.27], ['Wrong class', 0.18], ['Missed object', 0.15], ['Not an object', 0.06]],
-  },
-};
+import { api } from '../../../services/api';
+import type { Box } from '../../../showcase/content';
+import { routeOf, type Annotation, type LiveAsset, type LiveProject } from '../../store';
 
 /* ---------- Shapes ---------- */
 
-export type Sample = { kind: 'crop'; box: Box; src: string } | { kind: 'text'; text: string };
+export type Sample =
+  | { kind: 'crop'; box: Box; src: string; ratio: number }
+  | { kind: 'text'; text: string };
 
 export type ClassRow = {
   name: string;
-  /** Validated class palette, in fixed order (same as New project). */
   color: string;
+  /** Labels in this class now, rejected ones excluded. */
   labels: number;
-  conf: number;
-  /** AI accuracy: share of the AI's labels in this class reviewers kept unchanged. */
-  keptRate: number;
+  /** Mean AI confidence of the AI's labels in this class; null when it drafted none. */
+  conf: number | null;
+  /** AI labels in this class a person has decided on. */
+  reviewed: number;
+  /** AI accuracy: the share of reviewed AI labels kept unchanged; null before any review. */
+  keptRate: number | null;
   corrections: number;
-  sample: Sample;
+  sample: Sample | null;
 };
 
-export type Person = { name: string; initials: string; assigned: number; done: number; editRate: number };
+/** Items by their weakest label's confidence, in bins of 0.025 up to 1. */
+export type Bin = { lo: number; hi: number; n: number; checked: number; wrong: number };
 
-/** Items by AI confidence: 24 bins of 0.025 from 0.40 to 1.00. */
-export type Bin = { lo: number; hi: number; n: number };
+export type CalBin = { lo: number; hi: number; acc: number; items: number };
 
-const CLASS_COLORS = ['#2A78D6', '#EB6834', '#1BAF7A', '#E87BA4', '#008300', '#6250D6', '#0E9BB5', '#A0652A'];
-const PEOPLE = ['Marcus Lee', 'Sara Okafor', 'Daniel Costa', 'Priya Nair', 'Meera Shah', 'Tomás Reyes'];
-const PERSON_SHAPE = [
-  { load: 1.25, edit: 1.0 },
-  { load: 1.1, edit: 1.1 },
-  { load: 1.0, edit: 0.95 },
-  { load: 0.9, edit: 1.05 },
-  { load: 0.8, edit: 0.22 },
-  { load: 0.6, edit: 0.9 },
-];
+export type Hard = { id: string; name: string; conf: number; label: string; fix?: string; sample: Sample | null; route: string };
 
-function buildBins(drafted: number, approvedByAi: number): Bin[] {
-  // Below the line, counts rise toward it; above it, two bins share what the AI approved.
-  const below = Array.from({ length: 22 }, (_, i) => Math.exp((2.2 * i) / 22) * (1 + 0.08 * Math.sin(i * 1.7)));
-  const sumBelow = below.reduce((a, b) => a + b, 0);
-  const weights = [...below.map((w) => (w / sumBelow) * (1 - approvedByAi)), approvedByAi * 0.43, approvedByAi * 0.57];
-  return split(drafted, weights).map((n, i) => ({ lo: +(0.4 + i * 0.025).toFixed(3), hi: +(0.425 + i * 0.025).toFixed(3), n }));
+export type Overview = {
+  project: LiveProject;
+  line: number;
+  floor: number;
+  done: boolean;
+  assets: number;
+  unit: string;
+  labels: number;
+  labelNoun: string;
+  approved: number;
+  remaining: number;
+  queued: number;
+  failed: number;
+  drafted: number;
+  autoAccepted: number;
+  toPeople: number;
+  approvedAuto: number;
+  approvedHuman: number;
+  rejected: number;
+  inReview: number;
+  labelsReviewed: number;
+  corrections: number;
+  kept: number | null;
+  bins: Bin[];
+  classes: ClassRow[];
+  calibration: CalBin[];
+  fixes: { name: string; n: number }[];
+  mixups: { from: string; to: string; toIndex: number; n: number }[];
+  hardest: Hard[];
+};
+
+/* ---------- Reading a label ---------- */
+
+const DECIDED = new Set(['approved', 'edited', 'rejected']);
+
+const aiConfidence = (a: Annotation) => a.original_ai_confidence ?? a.confidence ?? null;
+const prov = (a: Annotation) => (a.provenance ?? {}) as Record<string, unknown>;
+const isAi = (a: Annotation) => a.source === 'ai' || a.source === 'human_modified' || !!a.model_id || typeof prov(a).original_ai_label === 'string';
+const originalLabel = (a: Annotation) => (typeof prov(a).original_ai_label === 'string' ? (prov(a).original_ai_label as string) : a.label);
+const isRejected = (a: Annotation) => a.review_status === 'rejected';
+const isEdited = (a: Annotation) => a.source === 'human_modified' || prov(a).human_edited === true || a.review_status === 'edited';
+const classChanged = (a: Annotation) => originalLabel(a) !== a.label;
+
+/** A label a person has decided on, directly or by approving or rejecting its item. */
+function isReviewed(a: Annotation, decidedAssets: Set<string>) {
+  return DECIDED.has(a.review_status ?? '') || a.source === 'human_modified' || decidedAssets.has(a.asset_id);
 }
 
-/** What a given approval line does to the work. */
-export function routeAt(o: Overview, line: number) {
-  let auto = 0;
-  let missed = 0;
-  for (const b of o.bins) {
-    if (b.lo >= line - 1e-9) {
-      auto += b.n;
-      // Assumes calibrated confidence: a 0.96 label is wrong about 4% of the time.
-      missed += b.n * (1 - (b.lo + b.hi) / 2) * 0.9;
-    }
+const spanText = (a: Annotation) => a.geometry?.text ?? a.text_span?.text ?? '';
+
+function sampleOf(a: Annotation | undefined, asset: LiveAsset | undefined, kind: LiveProject['kind']): Sample | null {
+  if (!a || !asset) return null;
+  if (kind === 'boxes') {
+    if (!(a.w > 0 && a.h > 0)) return null;
+    const ratio = asset.width && asset.height ? asset.width / asset.height : 4 / 3;
+    return { kind: 'crop', box: { id: a.id, label: a.label, x: a.x, y: a.y, w: a.w, h: a.h, conf: aiConfidence(a) ?? 0 }, src: api.getAssetImageUrl(asset.id), ratio };
   }
-  const review = o.drafted - auto;
-  return { auto, review, missed: Math.round(missed), share: o.drafted ? review / o.drafted : 0 };
+  const text = spanText(a) || asset.text_analysis?.text?.slice(0, 140) || '';
+  return text ? { kind: 'text', text } : null;
 }
 
-function sampleFor(p: Project, name: string, i: number): Sample {
-  const lower = name.toLowerCase();
-  switch (p.view) {
-    case 'detection':
-    case 'tracking': {
-      const box = streetBoxes.find((b) => (b.fix ?? b.label) === lower) ?? streetBoxes[i % streetBoxes.length];
-      return { kind: 'crop', box, src: images.street };
-    }
-    case 'pii':
-      return { kind: 'crop', box: piiRegions.find((r) => (lower.includes('plate') ? r.label === 'plate' : r.label === 'face'))!, src: images.buses };
-    case 'ner': {
-      const type = { person: 'PERSON', organisation: 'ORG', location: 'LOC', date: 'DATE' }[lower];
-      for (const s of textSamples) {
-        const span = s.spans.find((x) => (x.fix ?? x.type) === type);
-        if (span) return { kind: 'text', text: span.text };
-      }
-      return { kind: 'text', text: name };
-    }
-    case 'sentiment':
-      return { kind: 'text', text: (tickets.find((x) => (x.fix ?? x.ai) === name) ?? tickets[0]).text };
+const labelNounFor = (kind: LiveProject['kind']) => (kind === 'boxes' ? 'boxes' : kind === 'spans' ? 'entities' : 'labels');
+
+const FIX_NAMES: Record<LiveProject['kind'], [string, string, string, string]> = {
+  boxes: ['Wrong class', 'Box adjusted', 'Missed object', 'Not an object'],
+  spans: ['Wrong entity type', 'Span boundary fixed', 'Missed entity', 'Not an entity'],
+  document: ['Wrong label', 'Label adjusted', 'Label added', 'Label removed'],
+};
+
+/* ---------- Building the figures ---------- */
+
+export function buildOverview(p: LiveProject, items: LiveAsset[], all: Annotation[]): Overview {
+  const line = p.line;
+  const byAsset = new Map(items.map((a) => [a.id, a]));
+  const routes = new Map(items.map((a) => [a.id, routeOf(a)]));
+  const count = (r: string) => items.filter((a) => routes.get(a.id) === r).length;
+  const decidedAssets = new Set(items.filter((a) => ['approved', 'rejected'].includes(routes.get(a.id)!)).map((a) => a.id));
+
+  const failed = count('failed');
+  const queued = count('notRun');
+  const approvedAuto = count('approvedByAi');
+  const approvedHuman = count('approved');
+  const rejected = count('rejected');
+  const inReview = count('toReview');
+  const drafted = approvedAuto + approvedHuman + rejected + inReview;
+  const toPeople = drafted - approvedAuto;
+  const approved = approvedAuto + approvedHuman;
+
+  const live = all.filter((a) => !isRejected(a));
+  const aiReviewed = all.filter((a) => isAi(a) && isReviewed(a, decidedAssets));
+  const corrected = aiReviewed.filter((a) => isEdited(a) || isRejected(a));
+  const kept = aiReviewed.length ? 1 - corrected.length / aiReviewed.length : null;
+
+  /* Items by their weakest AI label: the label that decides whether the AI can approve it. */
+  const labelsOf = new Map<string, Annotation[]>();
+  for (const a of all) labelsOf.set(a.asset_id, [...(labelsOf.get(a.asset_id) ?? []), a]);
+  const weakest = new Map<string, number>();
+  for (const [id, rows] of labelsOf) {
+    const confs = rows.filter(isAi).map(aiConfidence).filter((c): c is number => c != null);
+    if (confs.length) weakest.set(id, Math.min(...confs));
   }
-}
-
-export type Overview = ReturnType<typeof buildOverview>;
-
-export function buildOverview(p: Project) {
-  const prof = profiles[p.view];
-  const rnd = seeded(p.id);
-  const done = p.reviewPending === 0 && p.qcPending === 0 && p.aiDone === p.assets;
-
-  const queued = p.assets - p.aiDone;
-  const drafted = p.aiDone;
-  const bins = buildBins(drafted, prof.approvedByAi);
-  const autoAccepted = bins.filter((b) => b.lo >= AI_LINE - 1e-9).reduce((s, b) => s + b.n, 0);
-  const toPeople = drafted - autoAccepted;
-  const approvedAuto = Math.min(autoAccepted, p.approved);
-  const approvedHuman = p.approved - approvedAuto;
-  // Items in quality check are still with people, so they count as in review here.
-  const inReview = p.reviewPending + p.qcPending;
-  const reviewed = approvedHuman + p.qcPending;
-
-  const labels = Math.round(p.assets * prof.labelsPerItem);
-  const labelsReviewed = Math.round(reviewed * prof.labelsPerItem);
-  const corrections = Math.round(labelsReviewed * (1 - prof.kept));
-
-  /* Classes */
-  const corrW = prof.classes.reduce((s, c) => s + c.corr, 0);
-  const classes: ClassRow[] = p.classes.map((name, i) => {
-    const m = prof.classes[i];
-    const labRev = Math.max(1, Math.round(labelsReviewed * m.share));
-    const corr = Math.round((corrections * m.corr) / corrW);
-    return {
-      name,
-      color: CLASS_COLORS[i % CLASS_COLORS.length],
-      labels: Math.round(labels * m.share),
-      conf: m.conf,
-      keptRate: Math.max(0.4, 1 - corr / labRev),
-      corrections: corr,
-      sample: sampleFor(p, name, i),
-    };
-  });
-
-  /* Reviewers */
-  const shapes = PERSON_SHAPE.slice(0, prof.team);
-  const loadSum = shapes.reduce((s, x) => s + x.load, 0);
-  const people: Person[] = PEOPLE.slice(0, prof.team).map((name, i) => {
-    const doneN = Math.round((reviewed * shapes[i].load) / loadSum);
-    return {
-      name,
-      initials: name
-        .split(' ')
-        .map((w) => w[0])
-        .join(''),
-      assigned: doneN + Math.round((p.reviewPending * shapes[i].load) / loadSum),
-      done: doneN,
-      editRate: Math.min(0.95, prof.itemEditRate * shapes[i].edit),
-    };
-  });
-
-  /* Can we trust the AI's confidence? Stated confidence against how often it was right. */
-  const calibration = [
-    [0.4, 0.5, 0.36],
-    [0.5, 0.6, 0.46],
-    [0.6, 0.7, 0.57],
-    [0.7, 0.8, 0.68],
-    [0.8, 0.9, 0.8],
-    [0.9, 0.95, 0.89],
-    [0.95, 1, 0.972],
-  ].map(([lo, hi, acc]) => ({
-    lo,
-    hi,
-    acc: Math.min(0.995, acc + (rnd() - 0.5) * 0.03),
-    items: bins.filter((b) => b.lo >= lo - 1e-9 && b.hi <= hi + 1e-9).reduce((s, b) => s + b.n, 0),
+  const lowest = Math.min(0.4, ...weakest.values());
+  const floor = Math.max(0, Math.floor(lowest * 10) / 10);
+  const binCount = Math.round((1 - floor) / 0.025);
+  const bins: Bin[] = Array.from({ length: binCount }, (_, i) => ({
+    lo: +(floor + i * 0.025).toFixed(3),
+    hi: +(floor + (i + 1) * 0.025).toFixed(3),
+    n: 0,
+    checked: 0,
+    wrong: 0,
   }));
+  for (const [id, c] of weakest) {
+    const bin = bins[Math.min(binCount - 1, Math.max(0, Math.floor((c - floor) / 0.025 + 1e-9)))];
+    bin.n++;
+    if (decidedAssets.has(id)) {
+      bin.checked++;
+      if ((labelsOf.get(id) ?? []).some((a) => isEdited(a) || isRejected(a) || a.source === 'human')) bin.wrong++;
+    }
+  }
+
+  /* Can we trust the AI's confidence? Each reviewed AI label: what it claimed, and whether it held. */
+  const edges = [floor, ...[0.5, 0.6, 0.7, 0.8, 0.9, 0.95].filter((e) => e > floor), 1];
+  const calibration: CalBin[] = edges.slice(0, -1).map((lo, i) => {
+    const hi = edges[i + 1];
+    const inBin = aiReviewed.filter((a) => {
+      const c = aiConfidence(a);
+      return c != null && c >= lo && (c < hi || (hi === 1 && c <= 1));
+    });
+    const right = inBin.filter((a) => !isEdited(a) && !isRejected(a)).length;
+    return { lo, hi, acc: inBin.length ? right / inBin.length : 0, items: inBin.length };
+  });
+
+  /* Classes, in project order. */
+  const classes: ClassRow[] = p.classList.map(({ name, color }) => {
+    const mine = all.filter((a) => originalLabel(a) === name && isAi(a));
+    const confs = mine.map(aiConfidence).filter((c): c is number => c != null);
+    const rev = mine.filter((a) => isReviewed(a, decidedAssets));
+    const corr = rev.filter((a) => isEdited(a) || isRejected(a)).length;
+    const best = [...live.filter((a) => a.label === name)].sort((a, b) => (aiConfidence(b) ?? 1) - (aiConfidence(a) ?? 1))[0];
+    return {
+      name,
+      color,
+      labels: live.filter((a) => a.label === name).length,
+      conf: confs.length ? confs.reduce((s, c) => s + c, 0) / confs.length : null,
+      reviewed: rev.length,
+      keptRate: rev.length ? 1 - corr / rev.length : null,
+      corrections: corr,
+      sample: sampleOf(best, best && byAsset.get(best.asset_id), p.kind),
+    };
+  });
 
   /* What kind of fixes reviewers make. */
-  const fixes = prof.fixes.map(([name], i) => ({ name, n: split(corrections, prof.fixes.map(([, w]) => w))[i] }));
+  const names = FIX_NAMES[p.kind];
+  const wrongClass = corrected.filter((a) => !isRejected(a) && classChanged(a)).length;
+  const reshaped = corrected.filter((a) => !isRejected(a) && !classChanged(a)).length;
+  // A label a person added counts as a missed one only where the AI drafted that item too.
+  const draftedByAi = new Set(all.filter((a) => a.source === 'ai' || !!a.model_id).map((a) => a.asset_id));
+  const added = all.filter((a) => a.source === 'human' && !isRejected(a) && draftedByAi.has(a.asset_id)).length;
+  const removed = corrected.filter(isRejected).length;
+  const fixes = [
+    { name: names[0], n: wrongClass },
+    { name: names[1], n: reshaped },
+    { name: names[2], n: added },
+    { name: names[3], n: removed },
+  ].filter((f) => f.n > 0);
 
-  /* Most common mix-ups: wrong-class corrections, split across the class pairs the model confuses. */
-  const wrongShare = prof.fixes[0][1];
-  const mixups = classes
-    .flatMap((c, i) => {
-      const weights = classes.map((_, j) => {
-        if (j === i) return 0;
-        const hit = prof.confusions.find(([a, b]) => (a === i && b === j) || (a === j && b === i));
-        return hit ? hit[2] : 0.25;
-      });
-      return split(Math.round(c.corrections * wrongShare), weights).map((n, j) => ({ from: c.name, to: classes[j].name, toIndex: j, n }));
-    })
-    .filter((m) => m.n > 0 && m.from !== m.to)
+  /* Most common mix-ups: what the AI called it, and what reviewers changed it to. */
+  const pairs = new Map<string, { from: string; to: string; n: number }>();
+  for (const a of all) {
+    if (isRejected(a) || !classChanged(a)) continue;
+    const key = `${originalLabel(a)}→${a.label}`;
+    const hit = pairs.get(key) ?? { from: originalLabel(a), to: a.label, n: 0 };
+    hit.n++;
+    pairs.set(key, hit);
+  }
+  const mixups = [...pairs.values()]
     .sort((a, b) => b.n - a.n)
-    .slice(0, 5);
+    .slice(0, 5)
+    .map((m) => ({ ...m, toIndex: Math.max(0, p.classes.indexOf(m.to)) }));
 
-  /* Who corrects which classes: each reviewer's change rate, class by class. */
-  const avgFix = Math.max(0.01, 1 - prof.kept);
-  const byReviewer = people.map((person) =>
-    classes.map((c) => Math.min(0.95, (1 - c.keptRate) * (person.editRate / (avgFix * 4)) * (0.85 + rnd() * 0.3))),
-  );
+  /* The hardest items: lowest weakest-label confidence first, with the reviewer's correction. */
+  const hardest: Hard[] = [...weakest]
+    .sort((a, b) => a[1] - b[1])
+    .slice(0, 6)
+    .map(([id, conf]) => {
+      const rows = labelsOf.get(id) ?? [];
+      const worst = rows.find((a) => aiConfidence(a) === conf) ?? rows[0];
+      const asset = byAsset.get(id);
+      const fix = worst && isRejected(worst) ? 'Rejected' : worst && classChanged(worst) ? worst.label : undefined;
+      return {
+        id,
+        name: asset?.filename ?? id,
+        conf,
+        label: worst ? originalLabel(worst) : '—',
+        fix,
+        sample: sampleOf(worst, asset, p.kind),
+        route: routes.get(id) ?? 'notRun',
+      };
+    });
 
   return {
     project: p,
-    done,
-    assets: p.assets,
+    line,
+    floor,
+    done: items.length > 0 && approved === items.length,
+    assets: items.length,
     unit: p.unit,
-    unitOne: p.unit.replace(/s$/, ''),
-    labels,
-    labelNoun: prof.labelNoun,
-    approved: p.approved,
-    remaining: p.assets - p.approved,
+    labels: live.length,
+    labelNoun: labelNounFor(p.kind),
+    approved,
+    remaining: items.length - approved,
     queued,
+    failed,
     drafted,
-    autoAccepted,
+    autoAccepted: approvedAuto,
     toPeople,
     approvedAuto,
     approvedHuman,
+    rejected,
     inReview,
-    labelsReviewed,
-    corrections,
-    kept: prof.kept,
+    labelsReviewed: aiReviewed.length,
+    corrections: corrected.length,
+    kept,
     bins,
     classes,
-    people,
     calibration,
     fixes,
     mixups,
-    byReviewer,
+    hardest,
   };
+}
+
+/** What a given approval line does to the drafted work, and what reviewers found above it. */
+export function routeAt(o: Overview, line: number) {
+  let auto = 0;
+  let checked = 0;
+  let wrong = 0;
+  for (const b of o.bins) {
+    if (b.lo >= line - 1e-9) {
+      auto += b.n;
+      checked += b.checked;
+      wrong += b.wrong;
+    }
+  }
+  const total = o.bins.reduce((s, b) => s + b.n, 0);
+  const review = total - auto;
+  return { auto, review, checked, wrong, share: total ? review / total : 0 };
 }
 
 /* ---------- Formatting ---------- */

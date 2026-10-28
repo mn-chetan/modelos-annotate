@@ -203,19 +203,22 @@ export function ObjectCrop({
   className = '',
   src = images.street,
   masked = false,
+  ratio = 1376 / 768,
 }: {
   box: Box;
   pad?: number;
   className?: string;
   src?: string;
   masked?: boolean;
+  /** The source image's width over height; the showcase photos are 1376 × 768. */
+  ratio?: number;
 }) {
   const x = Math.max(0, box.x - pad);
   const y = Math.max(0, box.y - pad * 1.5);
   const w = Math.min(100 - x, box.w + pad * 2);
   const h = Math.min(100 - y, box.h + pad * 3);
   return (
-    <div className={`spec-crop ${className}`} style={{ aspectRatio: `${w * 1376} / ${h * 768}` }}>
+    <div className={`spec-crop ${className}`} style={{ aspectRatio: `${w * ratio} / ${h}` }}>
       <img
         src={src}
         alt=""

@@ -2,17 +2,25 @@
  * New project, written as a brief: the name is the document's title and each decision a
  * numbered section. The margin keeps what the choices mean, and the one action, in view.
  */
-import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Check, Circle, FileText, Film, Image as ImageIcon, X } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Check, Circle, FileText, Film, Image as ImageIcon } from 'lucide-react';
 import { api } from '../../../services/api';
 import { request, refreshProjects } from '../../store';
 import { navigate } from '../../router';
 import { formatBytes, modalities, tasks } from './model';
 import { AddedNote, ClassChip, ClassEditor, DropZone, FileList, FileSummary, Rules } from './controls';
-import { useDraft, type Draft } from './useDraft';
+import { useDraft } from './useDraft';
 import './new-project.css';
 
 const icons = { image: ImageIcon, text: FileText, video: Film } as const;
+
+/** The tasks the annotation service can run today, and what each is called there. */
+const TARGETS: Record<string, { modality: 'image' | 'text'; task: string }> = {
+  'Object detection': { modality: 'image', task: 'object_detection' },
+  'Named entities': { modality: 'text', task: 'ENTITY_EXTRACTION' },
+  Sentiment: { modality: 'text', task: 'SENTIMENT_ANALYSIS' },
+  Classification: { modality: 'text', task: 'TEXT_CLASSIFICATION' },
+};
 
 export function NewProjectPage() {
   const d = useDraft();
@@ -24,35 +32,58 @@ export function NewProjectPage() {
   const uploaded = useRef(new Set<string>());
   const unit = modalities.find((m) => m.key === d.modality)!.unit;
 
+  const target = TARGETS[d.task];
+  const supported = d.modality !== 'video' && !!target;
+
   const create = async () => {
-    if (busy) return;
+    if (busy || !target) return;
     if (!d.ready) {
       d.setShowProblems(true);
       if (d.problems.name) nameRef.current?.focus();
       else classesRef.current?.querySelector<HTMLInputElement>('.np-class-add input')?.focus();
       return;
     }
-    setBusy(true); setError('');
+    setBusy(true);
+    setError('');
     try {
       let id = createdId;
       if (!id) {
-        const project = await request<{ id: string }>('/projects', { method: 'POST', body: JSON.stringify({
-          name: d.name.trim(), goal: d.description, modality: 'image', task_type: 'object_detection',
-          labels: d.classes.map(c => c.name), label_ontology: d.classes.map(c => ({ id: c.id, name: c.name, color: c.colour })),
-          confidence_threshold: d.threshold,
-          quality_policy: { confidence_threshold: d.threshold, auto_approve_threshold: d.threshold, notes: 'Demo: human approval is final; QC bypassed.' }
-        }) });
-        id = project.id; setCreatedId(id);
+        const project = await request<{ id: string }>('/projects', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: d.name.trim(),
+            goal: d.description,
+            modality: target.modality,
+            task_type: target.task,
+            labels: d.classes.map((c) => c.name),
+            label_ontology: d.classes.map((c) => ({ id: c.id, name: c.name, color: c.colour })),
+            confidence_threshold: d.threshold,
+            ...(target.modality === 'text' ? { sentiment_analysis_level: 'document', classification_analysis_level: 'document' } : {}),
+            quality_policy: {
+              confidence_threshold: d.threshold,
+              auto_approve_threshold: d.threshold,
+              // The share of reviewed work audited. (qc_sample_rate is the service's separate 2–5% spot check.)
+              sample_rate: d.sample / 100,
+            },
+          }),
+        });
+        id = project.id;
+        setCreatedId(id);
       }
-      // Upload individually and retain successful IDs so retry never repeats completed uploads.
+      // One file at a time, remembering what landed, so a retry never uploads a file twice.
       for (const f of d.files) {
         if (uploaded.current.has(f.id)) continue;
-        await api.uploadAssets(id, [f.file]); uploaded.current.add(f.id);
+        await api.uploadAssets(id, [f.file]);
+        uploaded.current.add(f.id);
       }
       await refreshProjects();
-      navigate({ id: 'project', projectId: id, tab: 'overview' });
-    } catch (e) { setError(e instanceof Error ? e.message : String(e)); await refreshProjects(); }
-    finally { setBusy(false); }
+      navigate({ id: 'project', projectId: id, tab: d.files.length ? 'ai' : 'overview' });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      await refreshProjects();
+    } finally {
+      setBusy(false);
+    }
   };
 
   const checks = [
@@ -70,7 +101,7 @@ export function NewProjectPage() {
       <p className="page-eyebrow">Workspace · New project</p>
       <div className="npa-desk">
         <article className="npa-sheet" aria-label="Project brief">
-          <fieldset disabled={busy || !!createdId} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+          <fieldset className="npa-fields" disabled={busy || !!createdId}>
           <header className="npa-title">
             <label className="np-sr" htmlFor="npa-name">
               Project name
@@ -170,7 +201,6 @@ export function NewProjectPage() {
             </div>
             <div className="npa-body">
               <Rules draft={d} />
-              <p className="muted">Demo: every image requires human approval. QC sampling is bypassed.</p>
             </div>
           </section>
         </fieldset>
@@ -206,12 +236,12 @@ export function NewProjectPage() {
               </li>
               <li>
                 <span>
-                  Confidence below <b className="mono">{d.threshold.toFixed(2)}</b> is highlighted for review
+                  At <b className="mono">{d.threshold.toFixed(2)}</b> or higher, the AI approves; below it goes to a person
                 </span>
               </li>
               <li>
                 <span>
-                  Human approval is final. QC sampling is unavailable in this demo.
+                  <b className="mono">{d.sample}%</b> of reviewed work is audited
                 </span>
               </li>
               <li>
@@ -227,12 +257,25 @@ export function NewProjectPage() {
                 </li>
               ))}
             </ul>
-            <p className="muted">Image object detection is available. Text, video and other image tasks are outside this demo.</p>
-            <button type="button" disabled={busy || d.modality !== 'image' || d.task !== 'Object detection' || !!d.fileStats.bad} className="btn btn-accent npa-create" onClick={create}>
-              {busy ? 'Saving…' : createdId ? 'Retry remaining uploads' : 'Create project'}
+            {!supported ? (
+              <p className="npa-unsupported">
+                {d.modality === 'video' ? 'Video' : d.task} projects can’t be created in this build. Image object detection, entities, sentiment and classification can.
+              </p>
+            ) : null}
+            <button type="button" disabled={busy || !supported || !!d.fileStats.bad} className="btn btn-accent npa-create" onClick={create}>
+              {busy ? (createdId ? 'Uploading…' : 'Creating…') : createdId ? 'Retry remaining uploads' : 'Create project'}
             </button>
-            {error && <p role="alert">{createdId ? 'Project saved. Retry uploads or open the project. ' : ''}{error}</p>}
-            {createdId && <button className="btn" onClick={() => navigate({ id: 'project', projectId: createdId, tab: 'overview' })}>Open saved project</button>}
+            {error ? (
+              <p className="npa-error" role="alert">
+                {createdId ? 'The project is saved, but some files didn’t upload. ' : ''}
+                {error}
+              </p>
+            ) : null}
+            {createdId ? (
+              <button type="button" className="btn btn-ghost npa-create" onClick={() => navigate({ id: 'project', projectId: createdId, tab: 'ai' })}>
+                Open the saved project
+              </button>
+            ) : null}
           </div>
         </aside>
       </div>

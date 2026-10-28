@@ -6,6 +6,7 @@
  *   #/projects/new        new project
  *   #/admin               administration
  *   #/p/:id[/:tab]        one project; tab defaults to overview
+ *   #/p/:id/review/:item  review, opened on one item
  */
 import { useSyncExternalStore } from 'react';
 
@@ -15,7 +16,7 @@ export type Route =
   | { id: 'projects' }
   | { id: 'new' }
   | { id: 'admin' }
-  | { id: 'project'; projectId: string; tab: ProjectTab };
+  | { id: 'project'; projectId: string; tab: ProjectTab; itemId?: string };
 
 // Reports folded into Overview; old #/p/:id/reports links fall back to it.
 const TABS: readonly ProjectTab[] = ['overview', 'ai', 'review', 'quality'];
@@ -26,7 +27,7 @@ export function parse(hash: string): Route {
   if (parts[0] === 'admin') return { id: 'admin' };
   if (parts[0] === 'p' && parts[1]) {
     const tab = TABS.includes(parts[2] as ProjectTab) ? (parts[2] as ProjectTab) : 'overview';
-    return { id: 'project', projectId: parts[1], tab };
+    return { id: 'project', projectId: parts[1], tab, itemId: tab === 'review' ? parts[3] : undefined };
   }
   return { id: 'projects' };
 }
@@ -40,12 +41,12 @@ export function href(route: Route): string {
     case 'admin':
       return '#/admin';
     case 'project':
-      return `#/p/${encodeURIComponent(route.projectId)}${route.tab === 'overview' ? '' : `/${route.tab}`}`;
+      return `#/p/${encodeURIComponent(route.projectId)}${route.tab === 'overview' ? '' : `/${route.tab}`}${route.itemId ? `/${encodeURIComponent(route.itemId)}` : ''}`;
   }
 }
 
-export const projectHref = (projectId: string, tab: ProjectTab = 'overview') =>
-  href({ id: 'project', projectId, tab });
+export const projectHref = (projectId: string, tab: ProjectTab = 'overview', itemId?: string) =>
+  href({ id: 'project', projectId, tab, itemId });
 
 export function navigate(route: Route) {
   location.hash = href(route);

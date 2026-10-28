@@ -49,6 +49,9 @@ export const palette: { hex: string; name: string }[] = [
   { hex: '#A0652A', name: 'Brown' },
 ];
 
+/** The palette colour for the class at this position, in fixed order; repeats past eight. */
+export const colourAt = (i: number) => palette[i % palette.length].hex;
+
 export const colourName = (hex: string) =>
   palette.find((p) => p.hex.toLowerCase() === hex.toLowerCase())?.name ?? hex.toUpperCase();
 

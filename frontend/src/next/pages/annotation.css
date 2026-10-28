@@ -1,0 +1,97 @@
+/*
+ * Boxes drawn over an image. Geometry is in image percentages; captions and handles stay
+ * in screen pixels so they read the same at any zoom.
+ */
+.image-boxes {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  line-height: 0;
+}
+
+.image-boxes > img {
+  display: block;
+  width: 100%;
+  min-height: 1px;
+}
+
+.annotation-overlay {
+  position: absolute;
+  inset: 0;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.annotation-overlay.is-quiet .box-geometry {
+  pointer-events: none;
+}
+
+.box-geometry {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.annotation-box {
+  cursor: pointer;
+}
+
+/* A hairline halo keeps a box legible on any photograph. */
+.annotation-box > rect:first-child {
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.7));
+}
+
+.annotation-box.is-selected {
+  cursor: move;
+}
+
+.box-captions {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.box-caption {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 27px;
+  padding: 0 8px;
+  border-left: 3px solid var(--box-colour);
+  border-radius: 3px;
+  background: rgba(21, 24, 30, 0.92);
+  box-shadow: var(--shadow-2);
+  color: #fff;
+  font: 400 12px/1 var(--sans);
+  white-space: nowrap;
+}
+
+.box-caption.is-focused {
+  background: var(--ink);
+}
+
+.box-caption b {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+
+.box-caption > span:last-child:not(:first-child) {
+  font: 10.5px var(--mono);
+  color: var(--on-dark-muted);
+}
+
+.box-caption-index {
+  padding-right: 6px;
+  border-right: 1px solid var(--on-dark-rule);
+  font: 9.5px var(--mono);
+  color: var(--on-dark-muted);
+}

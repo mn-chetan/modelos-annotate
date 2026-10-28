@@ -3,6 +3,7 @@
  * static showcase draws from. Everything here is illustrative sample data.
  */
 import type { ReactNode } from 'react';
+import { CircleCheck } from 'lucide-react';
 import {
   images,
   piiRegions,
@@ -18,6 +19,7 @@ import {
 } from '../../showcase/content';
 import { DetectionFrame, EntityText, Filmstrip, ObjectCrop, PiiFrame, TrackFrame, type Stage } from '../../showcase/specimens';
 import { modalityLabel } from '../nav';
+import { projectHref } from '../router';
 
 export const fmt = (n: number) => n.toLocaleString('en-GB');
 export const pct = (a: number, b: number) => (b === 0 ? 0 : Math.round((a / b) * 100));
@@ -43,6 +45,31 @@ export function PageHead({
       {actions ? <div className="page-actions">{actions}</div> : null}
     </header>
   );
+}
+
+/** A finished queue: what's done, and where to go next. */
+export function EmptyState({ title, line, project, actions }: { title: string; line: string; project: { id: string }; actions?: ReactNode }) {
+  return (
+    <section className="card empty">
+      <span className="empty-icon">
+        <CircleCheck size={24} aria-hidden />
+      </span>
+      <h2>{title}</h2>
+      <p>{line}</p>
+      <div className="page-actions">
+        {actions ?? (
+          <a className="btn btn-ghost" href={projectHref(project.id)}>
+            Open overview
+          </a>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/** One plain line under a page head saying what on the page is sample data, and why. */
+export function SampleNote({ children }: { children: ReactNode }) {
+  return <p className="sample-note">{children}</p>;
 }
 
 export const projectEyebrow = (p: Project) => `${modalityLabel[p.modality]} · ${p.task}`;

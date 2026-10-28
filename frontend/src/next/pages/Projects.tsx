@@ -13,7 +13,10 @@ export function ProjectsPage() {
   const { projects } = useProjects();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
-  const rows = projects.filter(p => (filter === 'all' || p.modality === filter) && p.name.toLowerCase().includes(query.toLowerCase()));
+  const stamp = (p: (typeof projects)[number]) => p.raw.updated_at ?? p.raw.created_at ?? '';
+  const rows = projects
+    .filter((p) => (filter === 'all' || p.modality === filter) && p.name.toLowerCase().includes(query.trim().toLowerCase()))
+    .sort((a, b) => stamp(b).localeCompare(stamp(a)));
 
   return (
     <div className="page">
@@ -50,12 +53,17 @@ export function ProjectsPage() {
               <th scope="col" className="num">
                 QC
               </th>
-              <th scope="col">Lead</th>
               <th scope="col">Updated</th>
             </tr>
           </thead>
           <tbody>
-            {!rows.length && <tr><td colSpan={7}>No projects here yet. Create a project to begin.</td></tr>}
+            {!rows.length ? (
+              <tr>
+                <td colSpan={6} className="muted">
+                  {projects.length ? 'No projects match.' : 'No projects yet. Create one to begin.'}
+                </td>
+              </tr>
+            ) : null}
             {rows.map((p) => (
               <tr key={p.id} className="row-link" onClick={() => navigate({ id: 'project', projectId: p.id, tab: 'overview' })}>
                 <td>
@@ -83,8 +91,9 @@ export function ProjectsPage() {
                   </div>
                 </td>
                 <td className="num">{p.reviewPending ? <span className="chip is-review">{p.reviewPending}</span> : <span className="muted">0</span>}</td>
-                <td className="num">{p.qcPending ? <span className="chip is-review">{p.qcPending}</span> : <span className="muted">0</span>}</td>
-                <td>{p.lead}</td>
+                <td className="num">
+                  <span className="muted" title="Quality check isn’t connected to live projects yet">—</span>
+                </td>
                 <td className="muted">{p.updated}</td>
               </tr>
             ))}

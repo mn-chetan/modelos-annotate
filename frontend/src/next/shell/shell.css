@@ -139,15 +139,28 @@
   color: var(--muted);
 }
 
-.ra-av {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
+.ra-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin: 0 4px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--avatar-from), var(--avatar-to));
-  color: #fff;
-  font: 600 11.5px/1 var(--sans);
+  background: var(--pass);
+  box-shadow: 0 0 0 3px var(--pass-soft);
+}
+
+.ra-foot.is-down .ra-dot {
+  background: var(--fail);
+  box-shadow: 0 0 0 3px var(--fail-soft);
+}
+
+.ra-retry {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink2);
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 /* ---------- Top bar ---------- */

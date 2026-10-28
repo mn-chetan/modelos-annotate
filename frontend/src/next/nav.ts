@@ -44,6 +44,7 @@ export function crumbFor(route: Route, project: Project | undefined): string[] {
     const tab = PROJECT_TABS.find((t) => t.tab === route.tab)!;
     return [project.name, tab.label];
   }
+  if (route.id === 'project') return [PROJECT_TABS.find((t) => t.tab === route.tab)!.label];
   const item = WORKSPACE_ITEMS.find((w) => w.id === route.id);
   return [item?.label ?? 'All projects'];
 }

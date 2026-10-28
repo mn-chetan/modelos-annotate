@@ -7,7 +7,7 @@
  */
 import { useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
 import { ObjectCrop } from '../../../showcase/specimens';
-import { AI_LINE, fmt, pctText, routeAt, type Overview, type Sample } from './model';
+import { fmt, pctText, routeAt, type Overview, type Sample } from './model';
 
 /** Blue means the AI decided; yellow means it went to people; green, approved by people. */
 export const AI_COLOR = '#2A57C0';
@@ -150,7 +150,7 @@ export function SeqKey({ low, high }: { low: string; high: string }) {
 }
 
 export function SampleView({ sample }: { sample: Sample }) {
-  if (sample.kind === 'crop') return <ObjectCrop box={sample.box} src={sample.src} pad={sample.box.w < 5 ? 2.5 : 1.2} className="ov-crop" />;
+  if (sample.kind === 'crop') return <ObjectCrop box={sample.box} src={sample.src} ratio={sample.ratio} pad={sample.box.w < 5 ? 2.5 : 1.2} className="ov-crop" />;
   return <span className="ov-snippet">“{sample.text}”</span>;
 }
 
@@ -158,9 +158,10 @@ export function SampleView({ sample }: { sample: Sample }) {
 
 export const PRESETS = [0.85, 0.9, 0.95];
 
-export function useLine() {
-  const [line, setLine] = useState(AI_LINE);
-  return { line, setLine };
+/** The line being explored, starting from the project's own. */
+export function useLine(initial: number) {
+  const [line, setLine] = useState(initial);
+  return { line, setLine, initial };
 }
 
 export function Routing({ o, t, height = 190 }: { o: Overview; t: ReturnType<typeof useLine>; height?: number }) {
@@ -174,18 +175,22 @@ export function Routing({ o, t, height = 190 }: { o: Overview; t: ReturnType<typ
   // The approved bins can dwarf the review band, which is the point of the chart; when they
   // do, break the axis and print their true counts above the break.
   const peak = Math.max(...bins.map((b) => b.n));
-  const body = Math.max(1, ...bins.filter((b) => b.hi <= AI_LINE + 1e-9).map((b) => b.n));
+  const body = Math.max(1, ...bins.filter((b) => b.hi <= t.initial + 1e-9).map((b) => b.n));
   const broken = peak > body * 3;
-  const max = broken ? niceMax(body * 2.2) : niceMax(peak);
+  // Counts are whole items: small ceilings stay even so the middle gridline is a whole number.
+  const ceiling = broken ? niceMax(body * 2.2) : niceMax(peak);
+  const max = ceiling < 4 ? Math.max(2, Math.ceil(ceiling / 2) * 2) : ceiling;
   const tall = bins.filter((b) => b.n > max);
   const roomy = band >= 34;
   const y = (v: number) => pad.t + (height - pad.t - pad.b) * (1 - v / max);
-  const xAt = (v: number) => pad.l + ((v - 0.4) / 0.6) * (W - pad.l - pad.r);
-  const set = (v: number) => t.setLine(+Math.min(0.975, Math.max(0.5, Math.round(v / 0.025) * 0.025)).toFixed(3));
+  const span = 1 - o.floor;
+  const xAt = (v: number) => pad.l + ((v - o.floor) / span) * (W - pad.l - pad.r);
+  const set = (v: number) => t.setLine(+Math.min(0.975, Math.max(o.floor + 0.05, Math.round(v / 0.025) * 0.025)).toFixed(3));
   const fromPointer = (e: PointerEvent<SVGElement>) => {
     const r = (e.currentTarget.ownerSVGElement ?? (e.currentTarget as SVGSVGElement)).getBoundingClientRect();
-    return 0.4 + ((e.clientX - r.left - pad.l) / (W - pad.l - pad.r)) * 0.6;
+    return o.floor + ((e.clientX - r.left - pad.l) / (W - pad.l - pad.r)) * span;
   };
+  const ticks = Array.from({ length: Math.round(span * 10) + 1 }, (_, i) => +(o.floor + i * 0.1).toFixed(1));
   const onKey = (e: KeyboardEvent) => {
     const step = e.key === 'ArrowRight' || e.key === 'ArrowUp' ? 0.025 : e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? -0.025 : 0;
     if (step) {
@@ -211,7 +216,7 @@ export function Routing({ o, t, height = 190 }: { o: Overview; t: ReturnType<typ
                 {compact(v)}
               </text>
             ))}
-            {[0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1].map((v) => (
+            {ticks.map((v) => (
               <text key={v} x={xAt(v)} y={height - 6} textAnchor="middle">
                 {v.toFixed(1)}
               </text>
@@ -258,7 +263,7 @@ export function Routing({ o, t, height = 190 }: { o: Overview; t: ReturnType<typ
             tabIndex={0}
             role="slider"
             aria-label="AI approves at or above this confidence"
-            aria-valuemin={0.5}
+            aria-valuemin={+(o.floor + 0.05).toFixed(2)}
             aria-valuemax={0.975}
             aria-valuenow={t.line}
             aria-valuetext={label}
@@ -287,8 +292,8 @@ export function Routing({ o, t, height = 190 }: { o: Overview; t: ReturnType<typ
             {v.toFixed(2)}
           </button>
         ))}
-        <button className="ov-reset" onClick={() => t.setLine(AI_LINE)} disabled={t.line === AI_LINE}>
-          Reset
+        <button className="ov-reset" onClick={() => t.setLine(t.initial)} disabled={t.line === t.initial}>
+          Back to the project’s {t.initial.toFixed(2)}
         </button>
         <span className="ov-presets-note">Drag the line, or focus it and use the arrow keys.</span>
       </div>
@@ -302,8 +307,8 @@ export const routingTable = (o: Overview, line: number): TableSpec => {
   return {
     cols: ['Route', o.unit[0].toUpperCase() + o.unit.slice(1), 'Share'],
     rows: [
-      [`Approved by AI (${line} and up)`, r.auto, pctText(r.auto / o.drafted)],
-      [`Sent to human review (below ${line})`, r.review, pctText(r.review / o.drafted)],
+      [`Approved by AI (${line} and up)`, r.auto, pctText(r.auto / Math.max(1, r.auto + r.review))],
+      [`Sent to human review (below ${line})`, r.review, pctText(r.share)],
     ],
   };
 };
@@ -315,44 +320,47 @@ export function Calibration({ o, line }: { o: Overview; line: number }) {
   const [tip, setTip] = useState<TipState>(null);
   const H = 230;
   const pad = { l: 40, r: 12, t: 14, b: 26 };
-  const x = (v: number) => pad.l + ((v - 0.4) / 0.6) * (W - pad.l - pad.r);
-  const y = (v: number) => pad.t + (H - pad.t - pad.b) * (1 - (v - 0.3) / 0.7);
-  const slope = (-Math.atan2(y(0.4) - y(1), x(1) - x(0.4)) * 180) / Math.PI;
+  const f = o.floor;
+  const x = (v: number) => pad.l + ((v - f) / (1 - f)) * (W - pad.l - pad.r);
+  const y = (v: number) => pad.t + (H - pad.t - pad.b) * (1 - v);
+  const slope = (-Math.atan2(y(f) - y(1), x(1) - x(f)) * 180) / Math.PI;
+  const xTicks = Array.from({ length: Math.round((1 - f) * 10) + 1 }, (_, i) => +(f + i * 0.1).toFixed(1));
+  const mid = +(f + (1 - f) * 0.35).toFixed(2);
   return (
     <div className="ov-chart" ref={ref} onPointerLeave={() => setTip(null)}>
       <svg width={W} height={H} role="img" aria-label="How often the AI was right at each level of confidence it stated">
         <g className="ov-grid">
-          {[0.4, 0.6, 0.8, 1].map((v) => (
+          {[0, 0.25, 0.5, 0.75, 1].map((v) => (
             <line key={v} x1={pad.l} x2={W - pad.r} y1={y(v)} y2={y(v)} />
           ))}
         </g>
         <g className="ov-axis">
-          {[0.4, 0.6, 0.8, 1].map((v) => (
+          {[0, 0.5, 1].map((v) => (
             <text key={v} x={pad.l - 8} y={y(v) + 4} textAnchor="end">
               {Math.round(v * 100)}%
             </text>
           ))}
-          {[0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1].map((v) => (
+          {xTicks.map((v) => (
             <text key={v} x={x(v)} y={H - 6} textAnchor="middle">
               {v.toFixed(1)}
             </text>
           ))}
         </g>
-        {o.calibration.map((b) => {
+        {o.calibration.filter((b) => b.items > 0).map((b) => {
           const x0 = x(b.lo) + 2;
           const w = x(b.hi) - x(b.lo) - 4;
-          const show = () => setTip({ x: x0 + w / 2, y: y(b.acc), value: `Right ${pctText(b.acc)}`, label: `Scored ${b.lo.toFixed(2)} to ${b.hi.toFixed(2)} · ${fmt(b.items)} ${o.unit}` });
+          const show = () => setTip({ x: x0 + w / 2, y: y(b.acc), value: `Right ${pctText(b.acc)}`, label: `Scored ${b.lo.toFixed(2)} to ${b.hi.toFixed(2)} · ${fmt(b.items)} reviewed ${o.labelNoun}` });
           return (
             <g key={b.lo}>
-              <path d={colPath(x0, y(b.acc), w, y(0.3) - y(b.acc))} fill={b.lo >= line - 1e-9 ? AI_COLOR : REVIEW_COLOR} />
+              <path d={colPath(x0, y(Math.max(b.acc, 0.01)), w, y(0) - y(Math.max(b.acc, 0.01)))} fill={b.lo >= line - 1e-9 ? AI_COLOR : REVIEW_COLOR} opacity={b.items < 5 ? 0.45 : 1} />
               <rect className="ov-hit" x={x0} y={pad.t} width={w} height={H - pad.t - pad.b} tabIndex={0} aria-label={`Scored ${b.lo} to ${b.hi}: right ${pctText(b.acc)}`} onPointerMove={show} onFocus={show} onBlur={() => setTip(null)} />
             </g>
           );
         })}
         {/* Perfectly calibrated: right exactly as often as it claims. */}
-        <line x1={x(0.4)} y1={y(0.4)} x2={x(1)} y2={y(1)} stroke="var(--ink)" strokeWidth={1.5} pointerEvents="none" />
+        <line x1={x(f)} y1={y(f)} x2={x(1)} y2={y(1)} stroke="var(--ink)" strokeWidth={1.5} pointerEvents="none" />
         {W > 420 ? (
-          <text className="ov-anno" x={x(0.6)} y={y(0.6) - 8} transform={`rotate(${slope},${x(0.6)},${y(0.6) - 8})`}>
+          <text className="ov-anno" x={x(mid)} y={y(mid) - 8} transform={`rotate(${slope},${x(mid)},${y(mid) - 8})`}>
             Right exactly as often as it claims
           </text>
         ) : null}
@@ -363,8 +371,8 @@ export function Calibration({ o, line }: { o: Overview; line: number }) {
 }
 
 export const calibrationTable = (o: Overview): TableSpec => ({
-  cols: ['AI confidence', 'Right', o.unit[0].toUpperCase() + o.unit.slice(1)],
-  rows: o.calibration.map((b) => [`${b.lo.toFixed(2)} to ${b.hi.toFixed(2)}`, pctText(b.acc), b.items]),
+  cols: ['AI confidence', 'Right', `Reviewed ${o.labelNoun}`],
+  rows: o.calibration.filter((b) => b.items > 0).map((b) => [`${b.lo.toFixed(2)} to ${b.hi.toFixed(2)}`, pctText(b.acc), b.items]),
 });
 
 /* ---------- Ranked horizontal bars ---------- */

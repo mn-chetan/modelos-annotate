@@ -9,7 +9,31 @@ import type { Project } from '../../showcase/content';
 import { href, projectHref, type Route } from '../router';
 import { PROJECT_TABS, WORKSPACE_ITEMS, crumbFor } from '../nav';
 import { ProjectSwitcher } from './ProjectSwitcher';
+import { refreshProjects, useProjects } from '../store';
 import './shell.css';
+
+/** Whether the annotation service answered the last request, so the rail never claims a connection it doesn't have. */
+function ServiceStatus() {
+  const { error, loading, projects } = useProjects();
+  const down = !!error;
+  return (
+    <div className={`ra-foot${down ? ' is-down' : ''}`}>
+      <span className="ra-dot" aria-hidden />
+      <div>
+        {loading ? 'Connecting…' : down ? 'Service unreachable' : 'Shared workspace'}
+        <small>
+          {down ? (
+            <button className="ra-retry" onClick={refreshProjects}>
+              Try again
+            </button>
+          ) : (
+            `${projects.length} ${projects.length === 1 ? 'project' : 'projects'}`
+          )}
+        </small>
+      </div>
+    </div>
+  );
+}
 
 function RailContents({ route, project, onNavigate }: { route: Route; project?: Project; onNavigate?: () => void }) {
   return (
@@ -51,15 +75,7 @@ function RailContents({ route, project, onNavigate }: { route: Route; project?: 
           ))}
         </ul>
       </nav>
-      <div className="ra-foot">
-        <span className="ra-av" aria-hidden>
-          AR
-        </span>
-        <div>
-          Demo workspace
-          <small>Human review</small>
-        </div>
-      </div>
+      <ServiceStatus />
     </>
   );
 }
@@ -114,7 +130,6 @@ export function Shell({ route, project, children }: { route: Route; project?: Pr
               </li>
             ))}
           </ol>
-          <a className="sample-chip" href="./">Home</a>
           {route.id === 'new' ? null : (
             <a className="btn btn-primary btn-sm" href={href({ id: 'new' })}>
               <Plus size={15} aria-hidden /> <span>New project</span>

@@ -604,7 +604,7 @@
 /* Hardest items */
 .ov-hard {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 210px));
   gap: 14px;
   margin: 0;
   padding: 0;
@@ -764,4 +764,71 @@
   .ov-scores {
     break-inside: avoid;
   }
+}
+
+/* ---------- Live evidence states ---------- */
+
+/* A figure waiting for evidence keeps its place, so the page reads the same before and after. */
+.ov-wait {
+  display: grid;
+  place-items: center;
+  min-height: 150px;
+  margin: 0;
+  padding: 24px clamp(16px, 4vw, 40px);
+  border: 1px dashed var(--rule-strong);
+  border-radius: 6px;
+  background: repeating-linear-gradient(135deg, transparent 0 9px, var(--rule2) 9px 10px);
+  color: var(--muted);
+  font-size: 13.5px;
+  text-align: center;
+  text-wrap: pretty;
+}
+
+.ov-export {
+  display: grid;
+  gap: 14px;
+  padding: 6px 0 4px;
+}
+
+.ov-export p {
+  margin: 0;
+  font-size: 15px;
+}
+
+.ov-export b {
+  font: 400 30px/1 var(--serif);
+  margin-right: 6px;
+}
+
+.ov-hard-meta {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+.ov-hard-blank {
+  display: block;
+  aspect-ratio: 4 / 3;
+  background: var(--rule2);
+  border-radius: 4px;
+}
+
+.ov-hard .ov-crop {
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+.ov-hard .ov-snippet {
+  display: block;
+  min-height: 90px;
+  padding: 12px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  font: 400 14px/1.4 var(--serif);
 }

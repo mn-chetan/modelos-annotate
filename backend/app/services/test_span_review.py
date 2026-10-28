@@ -1,7 +1,7 @@
 import pytest
 from fastapi import HTTPException
 
-from app.services.span_review import prepare_spans
+from app.services.span_review import prepare_spans, text_result_sound
 
 PROJECT = {'labels': ['Person', 'Organisation'], 'label_ontology': []}
 AI_SPAN = {'id': 's1', 'label': 'Person', 'geometry_type': 'text_span', 'geometry': {'start': 0, 'end': 9, 'text': 'Anika Rao'},
@@ -52,3 +52,15 @@ def test_unknown_decision_and_box_geometry_are_refused():
         prepare_spans([{**AI_SPAN, 'review_status': 'maybe'}], [AI_SPAN], PROJECT, 'a', 'p', 40)
     with pytest.raises(HTTPException):
         prepare_spans([{**AI_SPAN, 'geometry_type': 'box'}], [AI_SPAN], PROJECT, 'a', 'p', 40)
+
+
+def test_line_decides_confidence_but_unsound_results_go_to_a_person():
+    label = lambda name: {'label': name, 'geometry_type': 'text_classification', 'confidence': 0.74}
+    classes = ['Billing', 'Delivery']
+    # The model's own 0.95 bar is not the project's line: a clean result is sound.
+    assert text_result_sound({'final_decision': 'HUMAN_REVIEW', 'confidence_threshold': 0.95}, [label('Billing')], classes)
+    assert not text_result_sound({'errors': ['timeout']}, [label('Billing')], classes)
+    assert not text_result_sound({'semantic_conflicts': [{'alternative_label': 'Delivery'}]}, [label('Billing')], classes)
+    assert not text_result_sound({'invalid_output': True}, [label('Billing')], classes)
+    assert not text_result_sound({}, [], classes)
+    assert not text_result_sound({}, [label('Mixed')], ['Positive', 'Neutral', 'Negative'])

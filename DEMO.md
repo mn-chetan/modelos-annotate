@@ -64,7 +64,7 @@ The product rule throughout: the AI drafts every label, and approves an item on 
 **Text (entities, sentiment, classification)**
 
 1. New project → **Text**, then **Named entities**, **Sentiment** or **Classification**. Upload `.txt`, `.pdf`, `.docx`, `.csv`, `.json` or `.tsv`.
-2. **AI results → Run AI** sends each document to Gemini on Vertex AI (two at a time, from the page; keep it open until the run finishes). Each document is routed by the same line rule.
+2. **AI results → Run AI** sends each document to Gemini on Vertex AI (two at a time, from the page; keep it open until the run finishes). Each document is routed by the same line rule: the project's line decides, not the model's own 0.95 bar. A document still goes to a person when its result has errors or conflicts, or when the AI's label is not one of the project's classes (sentiment can come back as *Mixed*, which the default Positive / Neutral / Negative classes leave to a person). Labels are spelled as the project's classes (`POSITIVE` → `Positive`).
 3. **Review** shows the document at reading size with entities marked in their class colours. Click an entity to correct it; select any words and pick a class (or press its number) to add one the AI missed. Sentiment and classification projects put one decision on the whole document. **Approve and next** as for images.
 4. Export **JSON** (character offsets included) or **CSV**.
 

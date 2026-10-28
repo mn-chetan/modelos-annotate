@@ -151,7 +151,7 @@ export function setDocLabel(edits: Edits, asset: LiveAsset, label: string) {
   const rows = edits.rows.filter((a) => a.geometry_type === 'text_classification');
   const current = rows.find((a) => a.review_status !== 'rejected') ?? rows[0];
   if (current) {
-    const original = typeof current.provenance?.original_ai_label === 'string' ? (current.provenance.original_ai_label as string) : current.label;
+    const original = typeof current.provenance?.original_ai_label === 'string' ? (current.provenance.original_ai_label as string) : (edits.savedLabels.get(current.id) ?? current.label);
     edits.update(current.id, { label, review_status: label === original && current.source === 'ai' ? 'approved' : 'edited' });
     return;
   }
@@ -176,7 +176,8 @@ export function setDocLabel(edits: Edits, asset: LiveAsset, label: string) {
 function DocDecision({ project: p, asset, edits, colours }: { project: LiveProject; asset: LiveAsset; edits: Edits; colours: Record<string, string> }) {
   const rows = edits.rows.filter((a) => a.geometry_type === 'text_classification');
   const current = rows.find((a) => a.review_status !== 'rejected') ?? rows[0];
-  const original = current && typeof current.provenance?.original_ai_label === 'string' ? (current.provenance.original_ai_label as string) : null;
+  // What the AI said: recorded once saved, and the last saved label until then.
+  const original = !current ? null : typeof current.provenance?.original_ai_label === 'string' ? (current.provenance.original_ai_label as string) : current.source === 'ai' ? (edits.savedLabels.get(current.id) ?? null) : null;
   const c = current ? aiConfidence(current) : null;
   const choose = (label: string) => setDocLabel(edits, asset, label);
   const choices = p.classes.length ? p.classes : [...new Set(rows.map((r) => r.label))];

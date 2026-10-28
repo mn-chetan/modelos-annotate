@@ -23,6 +23,20 @@ def _span(ann) -> tuple[int, int, str]:
     return start, end, str(geometry.get('text') or '')
 
 
+def text_result_sound(quality, annotations, classes) -> bool:
+    """Whether the AI's text result may be approved by the line alone.
+
+    The line, not the model's own fixed bar, decides confidence. What still sends a document to
+    a person: structural errors, semantic conflicts, no labels, or a label outside the classes.
+    """
+    if not annotations or quality.get('errors') or quality.get('semantic_conflicts'):
+        return False
+    if any(quality.get(flag) for flag in ('invalid_spans', 'invalid_labels', 'invalid_output', 'no_semantic_result')):
+        return False
+    names = set(classes or [])
+    return not names or all(a.get('label') in names for a in annotations if a.get('geometry_type') != 'text_relation')
+
+
 def prepare_spans(annotations, existing, project, asset_id, project_id, text_length=None):
     ontology = set(project.get('labels') or [])
     ontology.update(c.get('name') for c in project.get('label_ontology', []) if isinstance(c, dict))

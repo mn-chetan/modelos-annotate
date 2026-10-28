@@ -326,11 +326,12 @@ async def proxy_text_annotation(
         "status": graph_state.get("final_status") or "COMPLETED",
     }
     # Route the document by the project's line, as images are: the AI approves it only when
-    # every label clears the line and its own quality check passed; otherwise a person reviews it.
+    # every label clears the line and is sound; otherwise a person reviews it.
     from app.services.demo_inference import ai_review_status
-    quality_passed = str((payload.get("quality_report") or {}).get("final_decision") or "").upper() in {"AUTO_APPROVE", "AUTO_APPROVED", "PASS"}
+    from app.services.span_review import text_result_sound
     confidences = [a.get("confidence") for a in payload["annotations"] if isinstance(a, dict)]
-    route = ai_review_status(project_doc, confidences) if quality_passed else "needs_review"
+    sound = text_result_sound(payload.get("quality_report") or {}, payload["annotations"], labels)
+    route = ai_review_status(project_doc, confidences) if sound else "needs_review"
     now = datetime.now(UTC)
     await session.assets.update_one({"id": asset_id, "project_id": project_id}, {"$set": {
         "text_analysis": payload, "text_analysis_type": analysis_type, "updated_at": now,

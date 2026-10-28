@@ -2077,6 +2077,13 @@ async def evaluate_quality_and_decision_node(state: PipelineState) -> PipelineSt
             seen_annotation_keys.add(key)
             unique_annotations.append(annotation)
         annotations = unique_annotations
+        # Spell labels as the project's classes do ("POSITIVE" → "Positive"), so reviews,
+        # colours and exports match the class list. A label outside the classes keeps its
+        # own name, softened from capitals, and goes to a person.
+        canonical = {str(name).casefold(): str(name) for name in state["project_snapshot"].get("labels") or []}
+        for annotation in annotations:
+            label = str(annotation.get("label") or "")
+            annotation["label"] = canonical.get(label.casefold()) or (label.capitalize() if label.isupper() else label)
         state["text_annotations"] = annotations
         errors = list((state.get("text_result") or {}).get("errors", []))
         plan = state.get("execution_plan") or {}

@@ -33,6 +33,16 @@ OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 ../.venv/bin/python warm_demo.py \
   ../frontend/src/assets/images/city_traffic_buses_1790017671585.jpg
 ```
 
+**Local, without the shared database (recommended for trying image runs).** The deployed `ingenii-annotate` worker shares the cloud database (see Practical limits), so for a clean local run use the Firestore emulator. It needs Java and the emulator component (`sudo apt-get install openjdk-21-jre-headless google-cloud-cli-firestore-emulator`):
+
+```bash
+gcloud emulators firestore start --host-port=127.0.0.1:8080        # one terminal
+APP_ENV=development FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 PORT=8011 \
+  .venv/bin/python backend/run_demo.py                               # another
+```
+
+The emulator starts empty and keeps data only while it runs. Text still calls Gemini on Vertex AI.
+
 For frontend development, keep the backend running and start Vite separately:
 
 ```bash
@@ -109,6 +119,7 @@ Verified on 2026-10-28 against the shared database, after the workspace was rest
 
 - Image: created a project with three street photos, ran the three models, and on the drafted image accepted, rejected, relabelled and drew a box, then **Approve and next**. The image was approved and the Overview's figures (AI accuracy 95.8% of 48 reviewed boxes, the person → bus mix-up, kinds of fix, hardest item) came from those saved decisions.
 - Text: created an entities project with three short test documents. Gemini on Vertex labelled all three, and all cleared the 0.70 line, so the AI approved them. In review, one document had an entity added from a text selection, one rejected and one relabelled, then was approved. Saved offsets match the document text, the relabel kept the AI's original class, and the JSON export held the 24 approved entities without the rejected one.
+- Local dry run on the Firestore emulator: three street photos all drafted (3 of 3; on the shared database the deployed worker had failed two). All three were reviewed in the UI (reject, undo, redo, Approve and next), and the exports matched the decisions: COCO with 3 images, 130 boxes and 4 classes, and YOLO with 130 label lines (133 boxes, 3 rejected).
 - `npm test`, `tsc --noEmit` (no errors) and the backend tests (`test_demo_flow.py`, `test_span_review.py`).
 
 ## Practical limits

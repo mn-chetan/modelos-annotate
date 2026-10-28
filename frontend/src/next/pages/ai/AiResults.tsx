@@ -440,7 +440,7 @@ function SheetItem({
               {weakest != null ? (
                 <>
                   {' · '}
-                  <span className={weakest < p.line ? 'is-low' : ''}>lowest {weakest.toFixed(2)}</span>
+                  <span className={weakest < p.line && flagged ? 'is-low' : ''}>lowest {weakest.toFixed(2)}</span>
                 </>
               ) : null}
             </span>

@@ -615,6 +615,9 @@
   display: grid;
   gap: 8px;
   align-content: start;
+  /* A long file name must ellipsize, not widen the column or its single track. */
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
 }
 
 .ov-hard .spec-crop {
@@ -801,7 +804,7 @@
 }
 
 .ov-hard-meta {
-  display: inline-block;
+  display: block;
   max-width: 100%;
   overflow: hidden;
   color: var(--muted);

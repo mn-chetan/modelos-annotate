@@ -10,7 +10,7 @@ import pytest
 from fastapi import HTTPException
 
 from app.services.box_review import prepare_boxes, save_boxes
-from app.services.demo_inference import run_demo_image
+from app.services.demo_inference import ai_review_status, approval_line, run_demo_image
 from app.services.export import ExportService
 from app.config import Settings
 from app.db.models import MongoDoc
@@ -136,3 +136,14 @@ async def test_save_commit_failure_keeps_previous_rows(tmp_path):
     assert annotations.rows==[old]
     annotations.delete_many.assert_not_called()
     annotations.insert_many.assert_not_called()
+
+
+def test_ai_approves_only_when_every_box_clears_the_line():
+    project = {"quality_policy": {"auto_approve_threshold": 0.9}, "confidence_threshold": 0.5}
+    assert approval_line(project) == 0.9
+    assert ai_review_status(project, [0.95, 0.91]) == "auto_approved"
+    assert ai_review_status(project, [0.95, 0.89]) == "needs_review"
+    assert ai_review_status(project, []) == "needs_review"
+    assert ai_review_status(project, [0.95, None]) == "needs_review"
+    assert approval_line({"confidence_threshold": 0.7}) == 0.7
+    assert approval_line({}) == 0.95

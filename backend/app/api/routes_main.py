@@ -325,8 +325,19 @@ async def proxy_text_annotation(
         "agent_status": graph_state.get("review_decision").status if graph_state.get("review_decision") else None,
         "status": graph_state.get("final_status") or "COMPLETED",
     }
-    await session.assets.update_one({"id": asset_id, "project_id": project_id}, {"$set": {"text_analysis": payload, "text_analysis_type": analysis_type, "updated_at": datetime.now(UTC)}})
-    await session["text_analyses"].insert_one({**payload, "created_at": datetime.now(UTC)})
+    # Route the document by the project's line, as images are: the AI approves it only when
+    # every label clears the line and its own quality check passed; otherwise a person reviews it.
+    from app.services.demo_inference import ai_review_status
+    quality_passed = str((payload.get("quality_report") or {}).get("final_decision") or "").upper() in {"AUTO_APPROVE", "AUTO_APPROVED", "PASS"}
+    confidences = [a.get("confidence") for a in payload["annotations"] if isinstance(a, dict)]
+    route = ai_review_status(project_doc, confidences) if quality_passed else "needs_review"
+    now = datetime.now(UTC)
+    await session.assets.update_one({"id": asset_id, "project_id": project_id}, {"$set": {
+        "text_analysis": payload, "text_analysis_type": analysis_type, "updated_at": now,
+        "status": "annotated", "review_status": route, "ai_completed_at": now, "inference_error": None,
+        "annotation_count": len(payload["annotations"]),
+    }})
+    await session["text_analyses"].insert_one({**payload, "created_at": now})
     return JSONResponse(status_code=200, content=payload)
 
 
@@ -376,10 +387,15 @@ async def get_project_text_analysis(
             or quality.get("invalid_output")
             or quality.get("no_semantic_result")
         )
+        # Never overwrite a person's decision, and approve by AI only when every label clears the line.
+        undecided = str(asset.get("review_status") or "").lower() in {"", "pending", "needs_review", "human_review"}
         if (
-            current_status in {"HUMAN_REVIEW", "HUMAN_REVIEW_REQUIRED", "IN_HUMAN_REVIEW"}
+            undecided
+            and current_status in {"HUMAN_REVIEW", "HUMAN_REVIEW_REQUIRED", "IN_HUMAN_REVIEW"}
             and isinstance(confidence, (int, float))
             and confidence >= threshold
+            and annotation_confidences
+            and min(annotation_confidences) >= threshold
             and not semantic_conflicts
             and structurally_valid
         ):
@@ -4234,6 +4250,9 @@ async def batch_save_asset_annotations(
     if (project_doc or {}).get("modality", "image") == "image":
         from app.services.box_review import save_boxes
         return await save_boxes(session, asset, payload.annotations)
+    if (project_doc or {}).get("modality") in {"text", "document"}:
+        from app.services.span_review import save_spans
+        return await save_spans(session, asset, payload.annotations)
 
     project_id = str(asset.get("project_id", ""))
 

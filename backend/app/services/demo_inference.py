@@ -12,6 +12,26 @@ from app.services.annotations import AnnotationService
 from app.services.batches import BatchService
 
 
+def approval_line(project) -> float:
+    """The confidence at or above which the AI approves an image without review."""
+    policy = project.get("quality_policy") or {}
+    for value in (policy.get("auto_approve_threshold"), project.get("confidence_threshold"), policy.get("confidence_threshold")):
+        if value is not None:
+            return float(value)
+    return 0.95
+
+
+def ai_review_status(project, confidences) -> str:
+    """Approve by AI only when there is at least one box and every box clears the line.
+
+    An image with no boxes, or with any box below the line, goes to a person.
+    """
+    scores = [float(c) for c in confidences if c is not None]
+    if not scores or len(scores) != len(confidences):
+        return "needs_review"
+    return "auto_approved" if min(scores) >= approval_line(project) else "needs_review"
+
+
 async def run_demo_image(db, settings, storage, runtime, project, asset, item, batch_id):
     if project.get("modality", "image") != "image" or project.get("task_type") != "object_detection":
         raise ValueError("Demo processing supports image object detection only")
@@ -69,7 +89,7 @@ async def run_demo_image(db, settings, storage, runtime, project, asset, item, b
         batch_id=batch_id, run_provenance={"pipeline": "demo_image", "model_run_ids": runs})
     now = datetime.now(UTC)
     await db.assets.update_one({"id": asset.id}, {"$set": {
-        "status": "annotated", "review_status": "needs_review", "caption": caption,
+        "status": "annotated", "review_status": ai_review_status(project, [d.confidence for d in merged]), "caption": caption,
         "inference_error": None, "ai_completed_at": now, "updated_at": now}})
     await BatchService(db, settings).complete_item(
         item_id=item.id, status="succeeded", detection_count=len(merged),

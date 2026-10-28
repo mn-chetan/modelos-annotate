@@ -1,4 +1,4 @@
-# ModelOS Annotate image demo
+# ModelOS Annotate: image and text demo
 
 The default entry is the approved editorial landing. Its workspace links open the React rail workspace at `/app1/next.html#/projects`. The legacy implementation remains in source/history but is not a build entry.
 
@@ -17,7 +17,9 @@ npm run build --prefix frontend
 PORT=8011 .venv/bin/python backend/run_demo.py
 ```
 
-Open **http://127.0.0.1:8011/app1/**. Port 8000 was occupied in the verification environment, so 8011 was used. `run_demo.py` defaults to 8000 if `PORT` is omitted.
+Open **http://127.0.0.1:8011/app1/**.
+
+If `backend/.env.local` sets `FIRESTORE_EMULATOR_HOST` (a local developer file, not tracked), it overrides the cloud database for every run. Remove that line, or start the backend with it unset, to use the shared database. Port 8000 was occupied in the verification environment, so 8011 was used. `run_demo.py` defaults to 8000 if `PORT` is omitted.
 
 The runner loads `backend/demo.env.example` as defaults and respects existing environment overrides. It uses the checked-in Firestore project/database and local image storage. Its `APP_ENV=production` selects the repository's existing remote-database mode; the service is bound to loopback and this command does not deploy anything. Existing Google Application Default Credentials must have access to the configured database. If authentication is needed, run `gcloud auth application-default login`. There is no memory fallback or database reset.
 
@@ -39,15 +41,24 @@ VITE_BACKEND_URL=http://127.0.0.1:8011 npm run dev --prefix frontend
 
 ## Demo steps
 
-1. Open workspace → New project. Choose **Image / Object detection**, set classes/colours and the confidence highlight threshold, and stage images.
-2. Create project. Upload failures retain the created project and offer retry for remaining files. The saved project can also be opened to upload images later.
-3. Open **Upload & run AI**. Upload more images if needed, then click **Run AI**. Status, errors, captions, boxes, model confidence and provenance come from persisted results. The three required models must all succeed before results are published.
-4. Open Review. Hover or select a box to see its name; the **Names** toggle spaces labels to avoid overlap. The object list supports class search and low-confidence/pending filters. Select an image; draw missing boxes, select/move them, drag corner handles to resize, and relabel, accept/reject or delete them in the selected-object inspector. Zoom and Undo/Redo are available. Keys 1–9 select classes; Delete removes a selected box; Ctrl/Cmd-Z and Shift-Ctrl/Cmd-Z undo/redo.
-5. **Save edits**. Saved edits reopen review and do not approve the image. Failed saves keep the local edits. Navigation asks before discarding unsaved edits.
-6. **Approve image** after every label is decided and saved. Successful empty results also require explicit approval. Human approval is final under `DEMO_QC_BYPASS=true`.
-7. Download **COCO JSON** or **YOLO** from Review or Overview. Only approved images and non-rejected labels are exported. The UI downloads label-only ZIPs; the existing export API can include images with `include_images=true`.
+The product rule throughout: the AI drafts every label, and approves an item on its own only when **every** label is at or above the project's line (set in New project, "Send to review below"). Everything else goes to a person, least confident first.
 
-Overview retains the editorial scorecards, paired figures, class table, hardest-items table and reviewer sections. Counts and correction evidence use persisted records. Calibration, ground-truth accuracy and reviewer comparisons remain unavailable where evidence is insufficient. QC and Administration are visible unavailable states. Text/video and non-box image tasks are outside this demo.
+**Image (object detection)**
+
+1. Open workspace → New project. Name it, choose **Image · Object detection**, set classes and colours, set the line, and add images. Create project. If an upload fails, the project is kept and **Retry remaining uploads** sends only the files that didn't land.
+2. **AI results** is the run desk. **Run AI** drafts every image with Florence-2 (scene note), YOLO26 and Grounding DINO (boxes, merged). The filters show where each image landed: below the line, approved by AI, approved, failed. The contact sheet shows each image with its boxes; the class summary shows where the AI is least sure; click an image for each box's model, confidence and agreement.
+3. **Review** opens on the images below the line, least confident first. Per box: accept (A), correct (pick a class, 1–9, or move/resize it), reject (R). Draw boxes the AI missed, zoom, undo/redo (Ctrl/Cmd-Z, Shift-Ctrl/Cmd-Z). **Approve and next** saves, accepts anything still undecided (the button says how many), approves, and moves on. **Save draft** saves without approving. Leaving with unsaved edits asks first.
+4. **Overview** reports the project from its saved labels: the six scorecards, the approval-line chart (drag it to see what another line would do), calibration, accuracy by class, mix-ups, kinds of fix, hardest items. Figures without enough evidence say what they need.
+5. Export **COCO JSON** or **YOLO** from Review or Overview. Only approved images (by AI or by a person) and non-rejected boxes are exported.
+
+**Text (entities, sentiment, classification)**
+
+1. New project → **Text**, then **Named entities**, **Sentiment** or **Classification**. Upload `.txt`, `.pdf`, `.docx`, `.csv`, `.json` or `.tsv`.
+2. **AI results → Run AI** sends each document to Gemini on Vertex AI (two at a time, from the page; keep it open until the run finishes). Each document is routed by the same line rule.
+3. **Review** shows the document at reading size with entities marked in their class colours. Click an entity to correct it; select any words and pick a class (or press its number) to add one the AI missed. Sentiment and classification projects put one decision on the whole document. **Approve and next** as for images.
+4. Export **JSON** (character offsets included) or **CSV**.
+
+**Not connected yet, shown as agreed screens with sample data:** Quality check and Administration. QC sampling is saved with each project but not run (`DEMO_QC_BYPASS=true`: a person's approval is final).
 
 ## Verification
 
@@ -94,10 +105,20 @@ Verified in this workspace:
 - Chromium completed the live landing-to-approved-export flow, including a simulated 503 save failure, cancelled navigation, zoomed movement/resizing, undo/redo and geometry persistence after reload.
 - Landing, New Project, Overview and Review inspected at 1440px, 720px and 390px, with no page-width overflow or browser JavaScript errors.
 
+Verified on 2026-10-28 against the shared database, after the workspace was restored:
+
+- Image: created a project with three street photos, ran the three models, and on the drafted image accepted, rejected, relabelled and drew a box, then **Approve and next**. The image was approved and the Overview's figures (AI accuracy 95.8% of 48 reviewed boxes, the person → bus mix-up, kinds of fix, hardest item) came from those saved decisions.
+- Text: created an entities project with three short test documents. Gemini on Vertex labelled all three, and all cleared the 0.70 line, so the AI approved them. In review, one document had an entity added from a text selection, one rejected and one relabelled, then was approved. Saved offsets match the document text, the relabel kept the AI's original class, and the JSON export held the 24 approved entities without the rejected one.
+- `npm test`, `tsc --noEmit` (no errors) and the backend tests (`test_demo_flow.py`, `test_span_review.py`).
+
 ## Practical limits
 
-- CPU execution is serial and can take tens of seconds per image; full-model downloads are required on the first run. No external LLM is required.
-- A save is one atomic Firestore batch, limited to 500 writes including removed boxes and the asset update. Larger annotation sets are refused before writing.
+- **Another worker shares this database.** The Cloud Run service `ingenii-annotate` in the same Google Cloud project runs a batch worker on `engenii-annotate-native`. It can claim image jobs queued by a local backend and fails them with "Uploaded image file is unavailable", because the uploaded files exist only on the local machine. To run images reliably, point the local backend at its own database (the Firestore emulator or a separate database) or stop that service's worker. Text runs inside the local request and is not affected.
+
+- CPU execution is serial and can take tens of seconds per image; full-model downloads are required on the first run. While a batch runs, other API calls slow down (several seconds each). Images need no external model; text needs Gemini on Vertex AI, billed to the configured Google Cloud project.
+- A save is one atomic Firestore batch, limited to 500 writes including removed labels and the asset update. Larger annotation sets are refused before writing.
 - Local image files must remain on this machine. Older cloud projects may reference images absent from this checkout; new demo uploads are saved under ignored `backend/storage/`.
-- Vision models can produce false positives even on blank images; mandatory human review can reject them. Successful empty inference and all-rejected reviews are supported.
-- No deployment, polygons/masks, text/video processing, QC or administration implementation is included.
+- Vision models can produce false positives even on blank images. An empty result is never approved by AI; a person confirms it.
+- The text run is driven from the AI results page; closing the page stops the documents not yet sent.
+- No sign-in: decisions are not attributed to named reviewers, so the Overview's reviewer figures wait for that.
+- No deployment, polygons/masks, video, relation extraction, QC or administration implementation is included.

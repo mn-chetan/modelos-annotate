@@ -40,9 +40,10 @@ async def run_demo_image(db, settings, storage, runtime, project, asset, item, b
     labels = list(project.get("labels") or [])
     if not labels:
         raise ValueError("Define project classes before running AI")
-    path = storage.resolve(asset.get("storage_path") or "")
-    if not path.is_file():
-        raise ValueError("Uploaded image file is unavailable")
+    storage_path = asset.get("storage_path")
+    path = storage.resolve(storage_path or "")
+    if not storage_path or not path.is_file():
+        raise ValueError(f"Uploaded image file is unavailable ({storage_path or 'no storage path on the asset'})")
     await db.assets.update_one({"id": asset.id}, {"$set": {"status": "processing", "inference_error": None}})
     detections, errors, runs = [], [], []
     caption = None
